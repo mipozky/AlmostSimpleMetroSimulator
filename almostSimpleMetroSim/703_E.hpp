@@ -1,3 +1,18 @@
+#include <SFML/Audio.hpp>
+#include <SFML/Graphics.hpp>
+
+#include <chrono>
+
+#include <vector>
+#include <string>
+
+#include "MGraphics.hpp"
+#include "mevent.hpp"
+#include "train_base.hpp"
+
+
+
+
 class Ent_Train_E : public Ent_Train
 {//208 519
  //306 615
@@ -20,7 +35,7 @@ protected:
         doorsClosed = !doorsClosed;
     }
     void updeteUiSprites() {
-		ui.switches[0].check.setPosition(ui.uiSprites[0].getPosition());
+        ui.switches[0].check.setPosition(ui.uiSprites[0].getPosition());
         ui.switches[0].check.setScale(ui.uiSprites[0].getScale());
         ui.switches[0].NegativeCheck.setPosition(ui.uiSprites[0].getPosition());
         ui.switches[0].NegativeCheck.setScale(ui.uiSprites[0].getScale());
@@ -52,7 +67,7 @@ public:
         ui.addButton(Vector2f(50, 50), Vector2f(pTex.getPosition().x + 104, pTex.getPosition().y + 260), Color::Green, font, "L dors", this->window, [this]() { openLdoor(); });
         ui.addButton(Vector2f(46, 45), Vector2f(pTex.getPosition().x + 335.5f, pTex.getPosition().y + 197.5f), Color::Green, font, "R dors", this->window, [this]() { openRdoor(); });
         ui.addSwitch(Vector2f(49.5f, 46.5f), Vector2f(pTex.getPosition().x + 317.5f, pTex.getPosition().y + 294.f), font, "VUD", this->window, [this]() { toggleVUD(); }, mg::deEmpty, switch3, switch3on);
-		ui.addUISprite(Sprite(VUDLight));
+        ui.addUISprite(Sprite(VUDLight));
         ui.uiSprites[1].setPosition(ui.uiSprites[0].getPosition());
         ui.uiSprites[1].setScale(ui.uiSprites[0].getScale());
 
@@ -60,14 +75,14 @@ public:
     vector<MEvent> work(vector<MEvent>* input, float dt) override {
         updeteUiSprites();
         bool lamp;
-        if((!sprites[0].anim.backFinished and !sprites[1].anim.backFinished and !sprites[3].anim.backFinished and !sprites[4].anim.backFinished)) lamp = 1;
-		else lamp = 0;
+        if ((!sprites[0].anim.backFinished and !sprites[1].anim.backFinished and !sprites[3].anim.backFinished and !sprites[4].anim.backFinished)) lamp = 1;
+        else lamp = 0;
         if ((!sprites[0].anim.finished or !sprites[1].anim.finished or !sprites[3].anim.finished or !sprites[4].anim.finished) and
             (!sprites[0].anim.backFinished or !sprites[1].anim.backFinished or !sprites[3].anim.backFinished or !sprites[4].anim.backFinished) or lamp) {
             ui.uiSprites[1].setPosition(ui.uiSprites[0].getPosition());
         }
         else {
-			ui.uiSprites[1].setPosition(Vector2f(-1000, -1000));
+            ui.uiSprites[1].setPosition(Vector2f(-1000, -1000));
         }
         if (input) {
             for (const MEvent& m : *input) {
@@ -75,7 +90,7 @@ public:
                     switch (m.key)
                     {
                     case Keyboard::Key::W:
-                        pos.x -= 5;
+                        movedDistance += 5;
                         break;
                     case Keyboard::Key::A:
                         if (doorsClosed) break;
@@ -86,7 +101,7 @@ public:
                         RdoorsOpen = 1;
                         break;
                     case Keyboard::Key::S:
-                        pos.x += 5;
+                        movedDistance -= 5;
                     case Keyboard::Key::V:
                         doorsClosed = !doorsClosed;
                         LdoorsOpen = 0;

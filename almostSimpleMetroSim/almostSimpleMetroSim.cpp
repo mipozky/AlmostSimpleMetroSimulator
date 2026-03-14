@@ -8,6 +8,10 @@
 #include <optional>
 #include <vector>
 #include <string>
+#include <entt/entt.hpp>
+#include <TGUI/TGUI.hpp>
+#include <TGUI/Backend/SFML-Graphics.hpp>
+
 #include "MGraphics.hpp"
 #include "mevent.hpp"
 #include "train_base.hpp"
@@ -15,12 +19,14 @@
 #include "draw.hpp"
 #include "tunnel.hpp"
 #include "includes.h"
- 
+#include <SFML/OpenGL.hpp>
+#include <windows.h>
+
 using namespace std;
 using namespace sf;
-//using E = Train{ &sprs, 10 }
-sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
-sf::RenderWindow window(desktopMode, "ASMS");
+
+sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
+sf::RenderWindow window(desktop, "ASMS", sf::Style::None);
 
 class MEventBus {
 public:
@@ -70,26 +76,31 @@ struct consist {
         }
     }
 };
-void renderingThread(sf::RenderWindow* window, consist& consist, atomic<bool>& running) {
+void renderingThread(sf::RenderWindow* window, consist& consist, tunnelSet& tunnels, atomic<bool>& running) {
     window->setActive(true);
-
+    HWND hwnd = window->getNativeHandle();
     while (running.load() && window->isOpen()) {
         window->clear();
-
+        tunnels.draw();
         for (auto& carriage : consist.carriages) {
             carriage->draw();
             carriage->drawUI();
+        }
+        if (GetAsyncKeyState(VK_LWIN) & 0x8000 || GetAsyncKeyState(VK_RWIN) & 0x8000)
+        {
+            ShowWindow(hwnd, SW_MINIMIZE);
         }
 
         window->display();
     }
 }
-
-void simulator(consist& consist, MEventBus& bus, atomic<bool>& running) {
+void simulator(consist& consist, tunnelSet& tunnels, MEventBus& bus, atomic<bool>& running) {
     vector<MEvent> inputEvents;
     inputEvents.reserve(64);
-
+    tunnels.generateTunnel();
+	tunnels.moveTunnels(Vector2f(window.getSize().x,0));
     while (running.load()) {
+		tunnels.generateTunnel();
         auto start = chrono::steady_clock::now();
 
         inputEvents.clear();
@@ -102,9 +113,8 @@ void simulator(consist& consist, MEventBus& bus, atomic<bool>& running) {
         consist.updatePreassure();
         consist.updateWires();
 
-        for (auto& T : consist.carriages) {
-            T->sim(&inputEvents, 0.01);
-        }
+        consist.carriages[0]->sim(&inputEvents, 0.01);
+        tunnels.moveTunnels(Vector2f(consist.carriages[0]->takeMovedDistance(), 0));
 
         const auto elapsed = chrono::steady_clock::now() - start;
         const auto frameTime = chrono::duration<double>(0.01);
@@ -117,6 +127,9 @@ void simulator(consist& consist, MEventBus& bus, atomic<bool>& running) {
 int main()
 {
     try {
+		Texture tunnelTex("textures\\tunnels\\tunel_sq_t1.png");
+		tunnelSet tunnels(&window, tunnelTex, { 0,345 });
+		
         consist consist;
         consist.carriages.push_back(make_unique<Ent_Train_E>(10, &window));
         consist.carriages.push_back(make_unique<Ent_Train_E>(11, &window));
@@ -136,8 +149,8 @@ int main()
         MEventBus bus;
         atomic<bool> running{ true };
         window.setActive(false);
-        thread renderThread(renderingThread, &window, ref(consist), ref(running));
-        thread simThread([&]() { simulator(consist, bus, running); });
+        thread renderThread(renderingThread, &window, ref(consist), ref(tunnels),  ref(running));
+        thread simThread([&]() { simulator(consist, tunnels, bus, running); });
         while (window.isOpen())
         {
             while (const optional event = window.pollEvent())

@@ -3,7 +3,7 @@
 #include <SFML/Window/Keyboard.hpp>
 
 struct MEvent {
-	std::string type;  // Use std::string instead of string
+	std::string type;
 	std::string sender;
 	void* data = nullptr;
 

@@ -175,8 +175,10 @@ protected:
     virtual vector<MEvent> work(vector<MEvent>* input, float dt) {
         return {};
     }
-
+	float movedDistance = 0.0f;
+	bool distanceTaken = false;
 public:
+    float takeMovedDistance() { distanceTaken = !distanceTaken; return movedDistance; }
     bool isHead = false;
     vector<MEvent> events;
 
@@ -211,6 +213,7 @@ public:
     vector<MEvent> getSentMev() { return events; }
 
     void sim(vector<MEvent>* input, float dt) {
+		if (distanceTaken) movedDistance = 0.0f;
         vector<MEvent> res = work(input, dt);
         events.assign(res.begin(), res.end());
     }
