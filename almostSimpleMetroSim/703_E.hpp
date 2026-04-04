@@ -1,141 +1,311 @@
+#pragma once
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
-
-#include <chrono>
-
-#include <vector>
-#include <string>
-
-#include "MGraphics.hpp"
+#include <unordered_map>
+#include <stdexcept>
+#include <entt/entt.hpp>
 #include "mevent.hpp"
 #include "train_base.hpp"
 
+using namespace sf;
+using namespace std;
 
 
+namespace train_e {
 
-class Ent_Train_E : public Ent_Train
-{//208 519
- //306 615
-protected:
-    Texture tex, salon;
-    Texture doorLLTex, doorLRTex, doorRLTex, doorRRTex;
-    Texture panelTex, switch1, switch2, switch3, switch1on, switch2on, switch3on;
-    Texture VUDLight;
-    bool LdoorsOpen = false;
-    bool RdoorsOpen = false;
-    bool doorsClosed = true;
-    Font font;
-    void openLdoor() {
-        LdoorsOpen = 1;
+    enum SpriteSlot {
+        DoorRL = 0,
+        DoorRR = 1,
+        Salon = 2, 
+        DoorLL = 3,
+        DoorLR = 4,
+        Body = 5,
+    };
+
+    enum class WireIndex {
+        VUD = 15,
+        DoorsLeft = 30,
+        DoorsRight = 31
+    };
+
+    struct DoorSystem {
+        bool LdoorsOpen = false;
+        bool RdoorsOpen = false;
+        bool doorsClosed = true; 
+    };
+
+    
+    struct VudLamp {
+        bool visible = false;
+    };
+
+    struct KeyListener {
+        unordered_map<sf::Keyboard::Key, std::function<void()>> bindings;
+		unordered_map<sf::Keyboard::Key, bool> pressedKeys;
+        void bind(sf::Keyboard::Key key, std::function<void()> fn) {
+            bindings[key] = std::move(fn);
+			pressedKeys[key] = false;
+        }
+
+        void process(const std::vector<MEvent>& input) const {
+            for (const auto& m : input) {
+                if (m.sender != "window" || m.type != "KeyPressed") continue;
+                auto it = bindings.find(m.key);
+                if (it != bindings.end()) it->second();
+            }
+        }
+    };
+    struct Controller {
+        int pos = 0;
+    };
+}
+inline entt::entity makeWagonE(entt::registry& reg,
+    RenderWindow* window,
+    TextureManager& tm,
+    bool isHead = false)
+{
+    entt::entity e = reg.create();
+
+    
+    Texture& texBody = tm.get("textures\\wagons\\E\\body.png");
+    Texture& texSalon = tm.get("textures\\wagons\\E\\salon.png");
+    Texture& texDoorLL = tm.get("textures\\wagons\\E\\doorsLL.png");
+    Texture& texDoorLR = tm.get("textures\\wagons\\E\\doorsLR.png");
+    Texture& texDoorRL = tm.get("textures\\wagons\\E\\doorsRL.png");
+    Texture& texDoorRR = tm.get("textures\\wagons\\E\\doorsRR.png");
+
+    
+    reg.emplace<train_base::RelPos>(e);
+    reg.emplace<train_base::Movement>(e);
+    reg.emplace<train_base::WireBus>(e);
+    reg.emplace<train_base::PressureLines>(e);
+    reg.emplace<train_base::Length>(e);        
+    reg.emplace<train_base::Scale>(e);
+    reg.emplace<train_base::EventBuffer>(e);
+	
+    auto& spl = reg.emplace<train_base::SpriteList>(e);
+    spl.add(Sprite(texDoorRL), animDrive(0, -50, 0.4f, animDrive::EaseType::Linear, true));
+    spl.add(Sprite(texDoorRR), animDrive(0, 50, 0.4f, animDrive::EaseType::Linear, true));
+    spl.add(Sprite(texSalon));
+    spl.add(Sprite(texDoorLL), animDrive(0, -50, 0.4f, animDrive::EaseType::Linear, true));
+    spl.add(Sprite(texDoorLR), animDrive(0, 50, 0.4f, animDrive::EaseType::Linear, true));
+    spl.add(Sprite(texBody));
+
+    
+    reg.emplace<train_e::DoorSystem>(e);
+    reg.emplace<train_e::VudLamp>(e);
+    reg.emplace<train_e::Controller>(e);
+
+    
+    if (isHead) {
+        reg.emplace<train_base::IsHead>(e);
+
+        Texture& texPanel = tm.get("textures\\wagons\\E\\interface\\panel.png");
+        Texture& texSw3 = tm.get("textures\\wagons\\E\\interface\\right_switch_off.png");
+        Texture& texSw3on = tm.get("textures\\wagons\\E\\interface\\right_switch_on.png");
+        Texture& texVUD = tm.get("textures\\wagons\\E\\interface\\VUD_light.png");
+        Texture& texControlollerBase = tm.get("textures\\wagons\\E\\interface\\controller_base.png");
+        Texture& texControlollerHandle = tm.get("textures\\wagons\\E\\interface\\controller_handle.png");
+
+        auto& ui = reg.emplace<train_base::TrainUi>(e);
+        if (!ui.font.openFromFile("fonts/consolas.ttf"))
+            throw runtime_error("Failed to load font");
+
+
+        Sprite pSpr(texPanel);
+        pSpr.setScale(Vector2f(0.5f, 0.5f));
+        pSpr.setPosition(Vector2f(760, 680));
+        ui.addUISprite(pSpr);                           
+
+        Sprite vudSpr(texVUD);
+        vudSpr.setPosition(pSpr.getPosition());
+        vudSpr.setScale(pSpr.getScale());
+        ui.addUISprite(vudSpr);                         
+
+        Vector2f pPos = pSpr.getPosition();
+
+        
+        entt::registry* regPtr = &reg;
+        ui.addButton(
+            Vector2f(50, 50),
+            Vector2f(pPos.x + 104, pPos.y + 260),
+            Color::Transparent, ui.font, "", window,
+            [regPtr, e]() { regPtr->get<train_e::DoorSystem>(e).LdoorsOpen = true; }
+        );
+        Vector2f leverSize(400,200 );         
+        Vector2f leverPos(390, 190);          
+        ui.addLever(Vector2f(-150, (window->getSize().y-(593))),leverSize,leverPos, Color::Transparent, ui.font, "", window,
+            texControlollerHandle, Vector2f(0, 0),
+            texControlollerBase, Vector2f(0, 0),
+            Vector2f(396, 322), 115, 312-360-115, 7,
+            [regPtr, e]() {
+
+                auto& ui = regPtr->get<train_base::TrainUi>(e);
+                if (ui.levers.empty()) return;
+                int leverPos = ui.levers[0].pos;
+                regPtr->get<train_e::Controller>(e).pos = leverPos - 3;
+            }
+		);
+        ui.levers[0].startUpdatePos(3);
+		
+        ui.addButton(
+            Vector2f(46, 45),
+            Vector2f(pPos.x + 335.5f, pPos.y + 197.5f),
+            Color::Transparent, ui.font, "", window,
+            [regPtr, e]() { regPtr->get<train_e::DoorSystem>(e).RdoorsOpen = true; }
+        );
+        ui.addSwitch(
+            Vector2f(49.5f, 46.5f),
+            Vector2f(pPos.x + 317.5f, pPos.y + 294.f),
+            ui.font, "VUD", window,
+            [regPtr, e]() {
+                auto& ds = regPtr->get<train_e::DoorSystem>(e);
+                ds.doorsClosed = !ds.doorsClosed;
+                if (ds.doorsClosed) { ds.LdoorsOpen = false; ds.RdoorsOpen = false; }
+            },
+            mg::emptyTex, texSw3, texSw3on
+        );
+
+        auto& kl = reg.emplace<train_e::KeyListener>(e);
+        entt::registry* regPtr2 = &reg;
+
+        kl.bind(Keyboard::Key::W, [regPtr2, e]() {
+            int &pos = regPtr2->get<train_e::Controller>(e).pos;
+			pos += 1;
+			if (pos > 3) pos = 3;
+            auto& uil = regPtr2->get<train_base::TrainUi>(e);
+			uil.levers[0].startUpdatePos(pos + 3);
+        });
+        kl.bind(Keyboard::Key::S, [regPtr2, e]() {
+            int& pos = regPtr2->get<train_e::Controller>(e).pos;
+            pos -= 1;
+            if (pos < -3) pos = -3;
+            auto& uil = regPtr2->get<train_base::TrainUi>(e);
+            uil.levers[0].startUpdatePos(pos + 3);
+        });
+        kl.bind(Keyboard::Key::V, [regPtr2, e]() {
+            auto& ds = regPtr2->get<train_e::DoorSystem>(e);
+            ds.doorsClosed = !ds.doorsClosed;
+            if (ds.doorsClosed) { ds.LdoorsOpen = false; ds.RdoorsOpen = false; }
+            auto& ui = regPtr2->get<train_base::TrainUi>(e);
+            if (!ui.switches.empty()) ui.switches[0].tick();
+        });
+        kl.bind(Keyboard::Key::A, [regPtr2, e]() {
+            auto& ds = regPtr2->get<train_e::DoorSystem>(e);
+            if (!ds.doorsClosed) ds.LdoorsOpen = true;
+        });
+        kl.bind(Keyboard::Key::D, [regPtr2, e]() {
+            auto& ds = regPtr2->get<train_e::DoorSystem>(e);
+            if (!ds.doorsClosed) ds.RdoorsOpen = true;
+        });
+        
     }
-    void openRdoor() {
-        RdoorsOpen = 1;
-    }
-    void toggleVUD() {
-        doorsClosed = !doorsClosed;
-    }
-    void updeteUiSprites() {
+
+    return e;
+}
+
+namespace train_e_systems {
+
+   
+    inline void updateUiSprites(train_base::TrainUi& ui) {
+        if (ui.uiSprites.size() < 2 || ui.switches.empty()) return;
         ui.switches[0].check.setPosition(ui.uiSprites[0].getPosition());
         ui.switches[0].check.setScale(ui.uiSprites[0].getScale());
         ui.switches[0].NegativeCheck.setPosition(ui.uiSprites[0].getPosition());
         ui.switches[0].NegativeCheck.setScale(ui.uiSprites[0].getScale());
-
     }
-public:
-    Ent_Train_E(int id, RenderWindow* window) : Ent_Train(id, window), doorLLTex("textures\\wagons\\E\\doorsLL.png"), doorLRTex("textures\\wagons\\E\\doorsLR.png"),
-        doorRLTex("textures\\wagons\\E\\doorsRL.png"), doorRRTex("textures\\wagons\\E\\doorsRR.png"), tex("textures\\wagons\\E\\body.png"),
-        salon("textures\\wagons\\E\\salon.png"), panelTex("textures\\wagons\\E\\interface\\panel.png"), switch1("textures\\wagons\\E\\interface\\left_switch_off.png"),
-        switch2("textures\\wagons\\E\\interface\\middle_switch_off.png"), switch3("textures\\wagons\\E\\interface\\right_switch_off.png"),
-        switch1on("textures\\wagons\\E\\interface\\left_switch_on.png"), switch2on("textures\\wagons\\E\\interface\\middle_switch_on.png"),
-        switch3on("textures\\wagons\\E\\interface\\right_switch_on.png"), VUDLight("textures\\wagons\\E\\interface\\VUD_light.png") {
 
-        if (!font.openFromFile("fonts/consolas.ttf")) {
-            throw std::runtime_error("Failed to load font");
-        }
-        addSprite(Sprite(doorRLTex), animDrive(0, -50, 0.4, animDrive::EaseType::Linear, true));
-        addSprite(Sprite(doorRRTex), animDrive(0, 50, 0.4, animDrive::EaseType::Linear, true));
-        addSprite(Sprite(salon));
-        addSprite(Sprite(doorLLTex), animDrive(0, -50, 0.4, animDrive::EaseType::Linear, true));
-        addSprite(Sprite(doorLRTex), animDrive(0, 50, 0.4, animDrive::EaseType::Linear, true));
-        addSprite(Sprite(tex));
+   
+    inline void simWagonE(entt::registry& reg,
+        entt::entity e,
+        const vector<MEvent>& input,
+        float dt)
+    {
+        auto& mv   = reg.get<train_base::Movement>(e);
+        auto& ds   = reg.get<train_e::DoorSystem>(e);
+        auto& spl  = reg.get<train_base::SpriteList>(e);
+        auto& rp   = reg.get<train_base::RelPos>(e);
+        auto& lamp = reg.get<train_e::VudLamp>(e);
+        auto& wb   = reg.get<train_base::WireBus>(e);
 
-        Sprite pTex(panelTex);
-        pTex.setScale(Vector2f(0.5f, 0.5f));
-        pTex.setPosition(Vector2f(760, 680));
-        ui.addUISprite(pTex);
+        using W = train_e::WireIndex;
+        bool isHead = reg.all_of<train_base::IsHead>(e);
 
-        ui.addButton(Vector2f(50, 50), Vector2f(pTex.getPosition().x + 104, pTex.getPosition().y + 260), Color::Green, font, "L dors", this->window, [this]() { openLdoor(); });
-        ui.addButton(Vector2f(46, 45), Vector2f(pTex.getPosition().x + 335.5f, pTex.getPosition().y + 197.5f), Color::Green, font, "R dors", this->window, [this]() { openRdoor(); });
-        ui.addSwitch(Vector2f(49.5f, 46.5f), Vector2f(pTex.getPosition().x + 317.5f, pTex.getPosition().y + 294.f), font, "VUD", this->window, [this]() { toggleVUD(); }, mg::deEmpty, switch3, switch3on);
-        ui.addUISprite(Sprite(VUDLight));
-        ui.uiSprites[1].setPosition(ui.uiSprites[0].getPosition());
-        ui.uiSprites[1].setScale(ui.uiSprites[0].getScale());
+        
+        if (isHead) {
+            auto& ui = reg.get<train_base::TrainUi>(e);
+            updateUiSprites(ui);
 
-    }
-    vector<MEvent> work(vector<MEvent>* input, float dt) override {
-        updeteUiSprites();
-        bool lamp;
-        if ((!sprites[0].anim.backFinished and !sprites[1].anim.backFinished and !sprites[3].anim.backFinished and !sprites[4].anim.backFinished)) lamp = 1;
-        else lamp = 0;
-        if ((!sprites[0].anim.finished or !sprites[1].anim.finished or !sprites[3].anim.finished or !sprites[4].anim.finished) and
-            (!sprites[0].anim.backFinished or !sprites[1].anim.backFinished or !sprites[3].anim.backFinished or !sprites[4].anim.backFinished) or lamp) {
-            ui.uiSprites[1].setPosition(ui.uiSprites[0].getPosition());
+            
+            reg.get<train_e::KeyListener>(e).process(input);
+			mv.accel = reg.get<train_e::Controller>(e).pos * .4f;
+			mv.speed += mv.accel*dt;
+			mv.distanceTaken = false;
+            
+            wb.wires[(int)W::VUD].self        = ds.doorsClosed ? 1 : 0;
+            wb.wires[(int)W::DoorsLeft].self  = ds.LdoorsOpen  ? 1 : 0;
+            wb.wires[(int)W::DoorsRight].self = ds.RdoorsOpen  ? 1 : 0;
         }
         else {
-            ui.uiSprites[1].setPosition(Vector2f(-1000, -1000));
-        }
-        if (input) {
-            for (const MEvent& m : *input) {
-                if (m.sender == "window" && m.type == "KeyPressed") {
-                    switch (m.key)
-                    {
-                    case Keyboard::Key::W:
-                        movedDistance += 5;
-                        break;
-                    case Keyboard::Key::A:
-                        if (doorsClosed) break;
-                        LdoorsOpen = 1;
-                        break;
-                    case Keyboard::Key::D:
-                        if (doorsClosed) break;
-                        RdoorsOpen = 1;
-                        break;
-                    case Keyboard::Key::S:
-                        movedDistance -= 5;
-                    case Keyboard::Key::V:
-                        doorsClosed = !doorsClosed;
-                        LdoorsOpen = 0;
-                        RdoorsOpen = 0;
-                        break;
-                    default:
-                        break;
-                    }
-                }
+           
+            bool vudFromWire   = wb.wires[(int)W::VUD].diff > 0;
+            bool leftFromWire  = wb.wires[(int)W::DoorsLeft].diff > 0;
+            bool rightFromWire = wb.wires[(int)W::DoorsRight].diff > 0;
+
+            ds.doorsClosed = vudFromWire;
+            if (ds.doorsClosed) {
+                ds.LdoorsOpen = false;
+                ds.RdoorsOpen = false;
+            } else {
+                ds.LdoorsOpen = leftFromWire;
+                ds.RdoorsOpen = rightFromWire;
             }
         }
-        if (doorsClosed) {
-            LdoorsOpen = 0;
-            RdoorsOpen = 0;
-        }
-        if (RdoorsOpen) {
-            sprites[0].updateAnim(dt, true);
-            sprites[1].updateAnim(dt, true);
-        }
-        else {
-            sprites[0].updateAnim(dt, false);
-            sprites[1].updateAnim(dt, false);
-        }
-        if (LdoorsOpen) {
-            sprites[3].updateAnim(dt, true);
-            sprites[4].updateAnim(dt, true);
-        }
-        else {
-            sprites[3].updateAnim(dt, false);
-            sprites[4].updateAnim(dt, false);
+
+       
+        using S = train_e::SpriteSlot;
+        auto& s0 = spl.sprites[S::DoorRL];
+        auto& s1 = spl.sprites[S::DoorRR];
+        auto& s3 = spl.sprites[S::DoorLL];
+        auto& s4 = spl.sprites[S::DoorLR];
+
+        bool allBack   = s0.anim.backFinished && s1.anim.backFinished &&
+                         s3.anim.backFinished && s4.anim.backFinished;
+        bool anyMoving = (!s0.anim.finished || !s1.anim.finished ||
+                          !s3.anim.finished || !s4.anim.finished) &&
+                         (!s0.anim.backFinished || !s1.anim.backFinished ||
+                          !s3.anim.backFinished || !s4.anim.backFinished);
+        lamp.visible = !allBack || anyMoving;
+
+       
+        if (isHead) {
+            auto& ui = reg.get<train_base::TrainUi>(e);
+            if (ui.uiSprites.size() >= 2) {
+                ui.uiSprites[1].setPosition(
+                    lamp.visible ? ui.uiSprites[0].getPosition()
+                                 : Vector2f(-1000, -1000));
+            }
         }
 
-        updatePos();
-        vector<MEvent> res{};
-        return res;
+       
+        s0.updateAnim(dt, ds.RdoorsOpen);
+        s1.updateAnim(dt, ds.RdoorsOpen);
+        s3.updateAnim(dt, ds.LdoorsOpen);
+        s4.updateAnim(dt, ds.LdoorsOpen);
+
+        
+        spl.updatePositions(rp.pos);
     }
-};
+
+
+    inline void simAllWagonsE(entt::registry& reg,
+        const vector<MEvent>& input,
+        float dt)
+    {
+
+        auto view = reg.view<train_e::DoorSystem>();
+        for (auto e : view)
+            simWagonE(reg, e, input, dt);
+    }
+
+} 

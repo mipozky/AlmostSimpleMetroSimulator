@@ -3,13 +3,15 @@
 #include <SFML/Window/Keyboard.hpp>
 
 struct MEvent {
-	std::string type;
-	std::string sender;
-	void* data = nullptr;
+    std::string type;
+    std::string sender;
+    std::string receiver;
 
-	sf::Keyboard::Key key = sf::Keyboard::Key::Unknown;
-	bool alt = false;
-	bool control = false;
-	bool shift = false;
-	bool system = false;
+    void* data = nullptr;
+
+    sf::Keyboard::Key key = sf::Keyboard::Key::Unknown;
+    bool alt     = false;
+    bool control = false;
+    bool shift   = false;
+    bool system  = false;
 };

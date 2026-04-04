@@ -1,5 +1,19 @@
 #pragma once
 #include <iostream>
+#include <SFML/Audio.hpp>
+#include <SFML/Graphics.hpp>
+#include <thread>
+#include <memory>
+#include <mutex>
+#include <atomic>
+#include <chrono>
+#include <optional>
+#include <vector>
+#include <string>
+#include <entt/entt.hpp>
+#include <TGUI/TGUI.hpp>
+#include <TGUI/Backend/SFML-Graphics.hpp>
+
 
 //// Segues
 //#include <swoosh/Segues/BlackWashFade.h>

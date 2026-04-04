@@ -23,9 +23,9 @@ class tunnelSet {
   Texture tunnelTexture;
   float texXStart = 438.f;
   float texXEnd = 772.f;
-
+  bool generatedFirst = false;
 public:
-  tunnelSet(RenderWindow *window, Texture tex, Vector2f offsets)
+  tunnelSet(RenderWindow *window, Texture& tex, Vector2f offsets)
       : window(window), tunnelTexture(tex) {
     texXStart = offsets.x;
     texXEnd = offsets.y;
@@ -63,3 +63,5 @@ public:
     }
   }
 };
+
+//todo add mutex

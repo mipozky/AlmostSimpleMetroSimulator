@@ -21,7 +21,12 @@ using namespace std;
 using namespace sf;
 
 namespace mg {
-    inline sf::Texture deEmpty;
+    inline sf::Texture emptyTex = []() {
+        sf::Image img({ 1, 1 }, sf::Color::Transparent);
+        sf::Texture tex;
+        tex.loadFromImage(img);
+        return tex;
+        }();
     inline void nothing() {
         //cout << "works!\n";
     }
@@ -85,7 +90,7 @@ namespace mg {
 
     class Box : public DrawBase {
     public:
-        Box(Vector2f size, Vector2f pos, Color color, const Font& font, string text, RenderWindow* window) : icon(deEmpty), line(font) {
+        Box(Vector2f size, Vector2f pos, Color color, const Font& font, string text, RenderWindow* window) : icon(emptyTex), line(font) {
             this->window = window;
             body.setSize(size);
             body.setFillColor(color);
@@ -134,7 +139,7 @@ namespace mg {
         void drawBase() override {
             window->draw(body);
             window->draw(line);
-            //window->draw(icon);
+            window->draw(icon);
         }
         void centerText(Vector2f pos, Vector2f size) {
             FloatRect textBounds = line.getLocalBounds();
@@ -215,8 +220,8 @@ namespace mg {
         }
 
         Button(Vector2f size, Vector2f pos, Color color, const Font& font, string text,
-            RenderWindow* window, const Texture& spr, Vector2f spriteOffset, std::function<void()> callback)
-            : Box(size, pos, color, font, text, window, spr, spriteOffset), work(callback) {
+            RenderWindow* window, const Texture& handleSpr, Vector2f handleSpriteOffset, std::function<void()> callback)
+            : Box(size, pos, color, font, text, window, handleSpr, handleSpriteOffset), work(callback) {
         }
 
         void force() { work(); }
@@ -235,7 +240,111 @@ namespace mg {
         virtual void onPress() { work(); }
         std::function<void()> work;
     };
+    class Lever : public Box {
+    public:
+        Lever(Vector2f size, Vector2f pos, Vector2f HandleColsize, Vector2f HandleColpos, Color color, const Font& font, string text,
+            RenderWindow* window, const Texture& handleSpr, Vector2f handleSpriteOffset,
+            const Texture& baseSpr, Vector2f baseSpriteOffset, Vector2f hingeloc, float startAngle_,
+            float moveAngle, int positions, bool side, std::function<void()> callback)
+            : Box(size, pos, color, font, text, window, baseSpr, baseSpriteOffset),
+            handle(handleSpr),
+            startAngle(startAngle_),
+            angle(startAngle_)
+        {
+            hinge = hingeloc;
+            anglePerPos = moveAngle / (positions - 1);
+            posLimit = positions - 1;
+            work = callback;
+            handle.setOrigin(hingeloc);
+            handle.setPosition(pos + handleSpriteOffset + hingeloc);
+            handle.setRotation(sf::degrees(startAngle)); 
+            localColRect = FloatRect(HandleColpos, HandleColsize);
 
+        }
+
+        int pos = 0;
+
+        void CheckMovement(const Event& press) {
+            if (const auto* e = press.getIf<Event::MouseButtonReleased>()) {
+                tracking = false;
+            }
+            if (const auto* e = press.getIf<Event::MouseButtonPressed>()) {
+              
+                Vector2f localMouse = handle.getInverseTransform().transformPoint(Vector2f(e->position));
+                if (localColRect.contains(localMouse)) {
+                    tracking = true;
+                }
+            }
+            if (const auto* e = press.getIf<Event::MouseMoved>()) {
+                if (tracking) updatePos();
+            }
+        }
+        void updatePos() {
+            if (!tracking) return;
+
+          
+            Vector2f mousePos = Vector2f(Mouse::getPosition(*window));
+            Vector2f hingeScreen = handle.getPosition();
+            float dx = mousePos.x - hingeScreen.x;
+            float dy = mousePos.y - hingeScreen.y;
+
+            float rawAngle = atan2(dy, dx);
+
+           
+            float startRad = startAngle * (M_PI / 180.f);
+            float relative = rawAngle - startRad;
+
+           
+            float anglePerPosRad = anglePerPos * (M_PI / 180.f);
+            float maxAngleRad = posLimit * anglePerPosRad;
+
+          
+            float midAngle = maxAngleRad / 2.f;
+            while (relative > midAngle + M_PI) relative -= 2.f * M_PI;
+            while (relative < midAngle - M_PI) relative += 2.f * M_PI;
+
+           
+            if (maxAngleRad >= 0.f)
+                relative = std::clamp(relative, 0.f, maxAngleRad);
+            else
+                relative = std::clamp(relative, maxAngleRad, 0.f);
+
+            int newPos = static_cast<int>(std::round(relative / anglePerPosRad));
+            int clampedPos = std::clamp(newPos, 0, posLimit);
+
+            if (clampedPos != pos) {
+                pos = clampedPos;
+                angle = startAngle + pos * anglePerPos;
+                handle.setRotation(sf::degrees(angle));
+                work();
+            }
+        }
+		void startUpdatePos(int newPos) {
+            pos = std::clamp(newPos, 0, posLimit);
+            angle = startAngle + pos * anglePerPos;
+            handle.setRotation(sf::degrees(angle));
+        }
+    protected:
+
+        void drawBase() override {
+            window->draw(body);
+            window->draw(icon);
+            window->draw(handle);
+        }
+
+        
+
+        bool tracking = false;
+        function<void()> work;
+        float startAngle = 0.f;
+        float anglePerPos = 0.f;
+        int posLimit = 0;
+        Sprite handle;
+        float angle = 0.f;
+        Vector2f hinge = Vector2f(0, 0);
+        FloatRect localColRect;
+
+    };
     class TickBox : public Button {
     public:
         TickBox(Vector2f size, Vector2f pos, const Font& font, string text,
@@ -270,13 +379,13 @@ namespace mg {
 
         bool isTicked() { return ticked; }
 
-        void tick() { ticked = !ticked; }
+        void tick() { ticked = !ticked;}
 
         void forceTrue() {
             if (!ticked) work();
             ticked = true;
         }
-
+		void forceTrueNoWork() { ticked = true; }
         void forceFalse() { ticked = false; }
         Sprite check;
         Sprite NegativeCheck;
