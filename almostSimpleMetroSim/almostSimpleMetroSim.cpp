@@ -18,14 +18,36 @@
 #include "train_base.hpp"
 #include "703_E.hpp"
 #include "includes.h"
+#include "console.hpp"
 #include <SFML/OpenGL.hpp>
+#include <consoleapi3.h>
 #include <windows.h>
 
 using namespace std;
 using namespace sf;
 
-sf::RenderWindow window;
-
+//sf::RenderWindow window;
+void crash() {
+    std::vector<int> v;
+    int i = v[0xfffffffffffffff2];
+}
+void failureDraw(Console&console, tgui::Gui& gui, RenderWindow*window) {
+    window->setActive(true);
+	console.log("Fail draw enabled");
+    HWND hwnd = window->getNativeHandle();
+    while (window->isOpen()) {
+		console.on();
+        if (GetAsyncKeyState(VK_LWIN) & 0x8000 || GetAsyncKeyState(VK_RWIN) & 0x8000)
+            ShowWindow(hwnd, SW_MINIMIZE);
+        while (const auto event = window->pollEvent()) {
+            gui.handleEvent(*event);
+            if (event->is<sf::Event::Closed>()) window->close();
+        }
+        window->clear({ 20, 0, 0 });
+        gui.draw();
+        window->display();
+    }
+}
 class MEventBus {
 public:
     void emit(const MEvent& event) {
@@ -55,21 +77,23 @@ struct Consist {
 void renderingThread(RenderWindow* window,
     entt::registry& reg,
     tunnelSet& tunnels,
-    atomic<bool>& running)
+    atomic<bool>& running,
+    tgui::Gui& gui,
+    Console& console,
+	atomic<bool>& renderFailed
+)
 {
     try {
-        RectangleShape startingRect(Vector2f(window->getSize().x, window->getSize().y));
-        window->draw(startingRect);
+        window->clear({ 0,0,0 });
         window->display();
 
         window->setActive(true);
         HWND hwnd = window->getNativeHandle();
-
         int   counter = 0;
         float fps = 0.f;
         auto  lastFpsTime = chrono::steady_clock::now();
         const chrono::duration<double> targetFrame(1.0 / 144.0);
-		
+		//throw runtime_error("Simulated render failure");
         while (running.load() && window->isOpen()) {
             auto frameStart = chrono::steady_clock::now();
 
@@ -90,9 +114,10 @@ void renderingThread(RenderWindow* window,
             if (GetAsyncKeyState(VK_LWIN) & 0x8000 || GetAsyncKeyState(VK_RWIN) & 0x8000)
                 ShowWindow(hwnd, SW_MINIMIZE);
 
+            gui.draw();
+
             window->display();
             ++counter;
-
             auto elapsed = chrono::steady_clock::now() - frameStart;
             if (elapsed < targetFrame)
                 this_thread::sleep_for(targetFrame - elapsed);
@@ -100,6 +125,8 @@ void renderingThread(RenderWindow* window,
     }
     catch (const exception& e) {
         cerr << "Error when rendering: " << e.what() << "\n";
+        window->setActive(false);
+        renderFailed.store(true);
     }
 
 }
@@ -107,15 +134,16 @@ void simulator(entt::registry& reg,
     Consist& consist,
     tunnelSet& tunnels,
     MEventBus& bus,
-    atomic<bool>& running)
+    atomic<bool>& running,
+    tgui::Gui& gui,
+    Console& console)
 {
     try {
         vector<MEvent> inputEvents;
         inputEvents.reserve(64);
-
+		bool first = true;
         tunnels.generateTunnel();
-        tunnels.moveTunnels(Vector2f(2000.f, 0.f));
-        this_thread::sleep_for(chrono::milliseconds(50));
+       
 
         while (running.load()) {
             auto start = chrono::steady_clock::now();
@@ -136,8 +164,14 @@ void simulator(entt::registry& reg,
             consist.updateWires(reg);
             train_e_systems::simAllWagonsE(reg, inputEvents, 0.01f);
 
-
-            tunnels.generateTunnel();
+            if (first) {
+                tunnels.generateTunnel();
+                tunnels.moveTunnels(Vector2f(1500, 0.f));
+                first = false;
+            }
+            else {
+                tunnels.generateTunnel();
+            }
             float moved = train_base_systems::readSpeed(reg, consist.head());
             tunnels.moveTunnels(Vector2f(moved, 0));
 
@@ -150,23 +184,31 @@ void simulator(entt::registry& reg,
     }
     catch (const exception& e) {
         cerr << "Error in simulation: " << e.what() << "\n";
+		console.on();
     }
 }
 
 int main()
 {
+    ShowWindow(GetConsoleWindow(), 0);
+    sf::ContextSettings settings;
+    settings.antiAliasingLevel = 16;
+    sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
+    sf::RenderWindow window(desktop, "ASMS", sf::State::Fullscreen, settings);
+
+    tgui::Gui gui{ window };
+    Console console{ gui };
+
+    ConsoleBuf coutBuf(console, std::cout);
+    ConsoleBuf cerrBuf(console, std::cerr);
+    ConsoleBuf clogBuf(console, std::clog);
+
     try {
-        sf::ContextSettings settings;
-        settings.antiAliasingLevel = 16;
-        sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
-        sf::RenderWindow window(desktop, "ASMS", sf::State::Fullscreen, settings);
+        
         TextureManager tm;
         tunnelSet tunnels(&window, tm.get("textures\\tunnels\\tunel_sq_t1.png"), { 0, 345 });
-        cout << "bleh\n";
         entt::registry reg;
         Consist consist;
-
-        
         consist.order.push_back(makeWagonE(reg, &window, tm, true));
         consist.order.push_back(makeWagonE(reg, &window, tm, false));
 
@@ -189,14 +231,19 @@ int main()
 
         MEventBus bus;
         atomic<bool> running{ true };
+		atomic<bool> renderFailed{ false };
 
         window.setActive(false);
-        thread renderThread(renderingThread, &window, ref(reg), ref(tunnels), ref(running));
-        thread simThread([&]() { simulator(reg, consist, tunnels, bus, running); });
+        jthread renderThread(renderingThread, &window, ref(reg), ref(tunnels), ref(running), ref(gui), ref(console), ref(renderFailed));
+        jthread simThread([&]() { simulator(reg, consist, tunnels, bus, running, gui, console); });
 
         
         while (window.isOpen()) {
+            if (renderFailed.load()) {
+                failureDraw( console, gui,&window);
+            }
             while (const optional ev = window.pollEvent()) {
+                gui.handleEvent(*ev);
                 if (ev->is<Event::Closed>()) {
                     running.store(false);
                     if (renderThread.joinable()) renderThread.join();
@@ -212,6 +259,8 @@ int main()
                     train_base_systems::checkUIEvents(reg, *ev);
                 }
                 else if (const auto* kp = ev->getIf<Event::KeyPressed>()) {
+                    if (kp->code == sf::Keyboard::Key::Grave)
+                        console.toggle();
                     MEvent m;
                     m.type = "KeyPressed";
                     m.sender = "window";
@@ -228,11 +277,13 @@ int main()
 
         running.store(false);
         if (renderThread.joinable()) renderThread.join();
-        if (simThread.joinable())    simThread.join();
+        if (simThread.joinable()) simThread.join();
         return 0;
     }
     catch (const exception& e) {
         cerr << "Error on startup/event gather: " << e.what() << "\n";
+        console.on();
+		failureDraw(console, gui, &window);
         return 1;
     }
 }

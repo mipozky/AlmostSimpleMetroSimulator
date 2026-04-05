@@ -58,10 +58,17 @@ public:
     }
   }
   void draw() {
-    for (const tunnel &T : tunnels) {
-      window->draw(T.spr);
+      for (const tunnel& T : tunnels) {
+          try {
+              window->draw(T.spr);
+          }
+          catch 
+          (const exception& e) {
+			  throw runtime_error(string("Error drawing tunnel: ") + e.what());
+		  }
+      }
     }
-  }
+  
 };
 
-//todo add mutex
+//todo add mutex`
