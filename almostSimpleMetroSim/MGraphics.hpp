@@ -32,7 +32,8 @@ namespace mg {
     }
     class DrawBase {
     public:
-        void draw() { drawBase(); for (auto obj : Linked) { obj->draw(); }
+        void draw() {
+            drawBase(); for (auto obj : Linked) { obj->draw(); }
         }
         void setPosition(Vector2f pos) { Vector2f delta = setPositionBase(pos); for (auto obj : Linked) obj->setPosition(obj->getPosition() + delta); }
 
@@ -257,7 +258,7 @@ namespace mg {
             work = callback;
             handle.setOrigin(hingeloc);
             handle.setPosition(pos + handleSpriteOffset + hingeloc);
-            handle.setRotation(sf::degrees(startAngle)); 
+            handle.setRotation(sf::degrees(startAngle));
             localColRect = FloatRect(HandleColpos, HandleColsize);
 
         }
@@ -269,7 +270,7 @@ namespace mg {
                 tracking = false;
             }
             if (const auto* e = press.getIf<Event::MouseButtonPressed>()) {
-              
+
                 Vector2f localMouse = handle.getInverseTransform().transformPoint(Vector2f(e->position));
                 if (localColRect.contains(localMouse)) {
                     tracking = true;
@@ -282,7 +283,7 @@ namespace mg {
         void updatePos() {
             if (!tracking) return;
 
-          
+
             Vector2f mousePos = Vector2f(Mouse::getPosition(*window));
             Vector2f hingeScreen = handle.getPosition();
             float dx = mousePos.x - hingeScreen.x;
@@ -290,20 +291,20 @@ namespace mg {
 
             float rawAngle = atan2(dy, dx);
 
-           
+
             float startRad = startAngle * (M_PI / 180.f);
             float relative = rawAngle - startRad;
 
-           
+
             float anglePerPosRad = anglePerPos * (M_PI / 180.f);
             float maxAngleRad = posLimit * anglePerPosRad;
 
-          
+
             float midAngle = maxAngleRad / 2.f;
             while (relative > midAngle + M_PI) relative -= 2.f * M_PI;
             while (relative < midAngle - M_PI) relative += 2.f * M_PI;
 
-           
+
             if (maxAngleRad >= 0.f)
                 relative = std::clamp(relative, 0.f, maxAngleRad);
             else
@@ -319,7 +320,7 @@ namespace mg {
                 work();
             }
         }
-		void startUpdatePos(int newPos) {
+        void startUpdatePos(int newPos) {
             pos = std::clamp(newPos, 0, posLimit);
             angle = startAngle + pos * anglePerPos;
             handle.setRotation(sf::degrees(angle));
@@ -332,7 +333,7 @@ namespace mg {
             window->draw(handle);
         }
 
-        
+
 
         bool tracking = false;
         function<void()> work;
@@ -354,7 +355,7 @@ namespace mg {
             box(boxTexture), check(checkTexture), NegativeCheck(checkTexture) {
             box.setPosition(body.getPosition());
             if (!managepos) {
-                
+
                 check.setPosition(body.getPosition());
             }
             offsetText(Vector2f(box.getLocalBounds().size.y + 1, 0));
@@ -368,24 +369,24 @@ namespace mg {
             box(boxTexture), check(checkTexture), NegativeCheck(negCheckTexture) {
             box.setPosition(body.getPosition());
             if (!managepos) {
-               
+
                 check.setPosition(body.getPosition());
                 NegativeCheck.setPosition(body.getPosition());
             }
-            
+
             offsetText(Vector2f(box.getLocalBounds().size.y + 1, 0));
             negCheck = true;
         }
 
         bool isTicked() { return ticked; }
 
-        void tick() { ticked = !ticked;}
+        void tick() { ticked = !ticked; }
 
         void forceTrue() {
             if (!ticked) work();
             ticked = true;
         }
-		void forceTrueNoWork() { ticked = true; }
+        void forceTrueNoWork() { ticked = true; }
         void forceFalse() { ticked = false; }
         Sprite check;
         Sprite NegativeCheck;
@@ -416,6 +417,65 @@ namespace mg {
         Sprite box;
         bool negCheck = false;
         bool ticked = false;
+    };
+    class Gauge : public Box {
+    public:
+        Gauge(Vector2f size, Vector2f pos, RenderWindow* window,
+            const Texture& base, const Texture& needleTex, Vector2f spriteOffset, Vector2f hinge,
+            float minVal, float maxVal,
+            float minAngle, float maxAngle,
+            float physLimitDegrees,
+            bool circular = false)
+            : Box(size, pos, sf::Color::Transparent, Font(), "", window, base, spriteOffset),
+            minVal(minVal), maxVal(maxVal),
+            minAngle(minAngle), maxAngle(maxAngle),
+            physLimit(physLimitDegrees), isCircular(circular), needle(needleTex)
+        {
+            this->needle.setOrigin(hinge);
+
+            // FIX: Add the hinge to the body position to place the pivot correctly
+            // If spriteOffset is (0,0), the needle pivot will sit exactly 
+            // at the 'hinge' coordinates relative to the top-left of the gauge.
+            this->needle.setPosition(body.getPosition() + spriteOffset + hinge);
+        }
+
+        void setValue(float v) {
+            value = v;
+            updateNeedle(); // Update rotation immediately when value changes
+        }
+
+        void updateNeedle() {
+            if (maxVal == minVal) return;
+
+            float ratio = (value - minVal) / (maxVal - minVal);
+            float targetAngle = minAngle + ratio * (maxAngle - minAngle);
+
+            if (isCircular) {
+                targetAngle = std::fmod(targetAngle, 360.f);
+                if (targetAngle < 0) targetAngle += 360.f;
+            }
+            else {
+                float absoluteMax = maxAngle + physLimit;
+                float absoluteMin = minAngle - physLimit;
+                targetAngle = std::clamp(targetAngle, std::min(absoluteMin, absoluteMax), std::max(absoluteMin, absoluteMax));
+            }
+
+            needle.setRotation(sf::degrees(targetAngle));
+        }
+
+    protected:
+        void drawBase() override {
+
+            window->draw(body);
+			window->draw(icon);
+            window->draw(needle);
+        }
+
+        Sprite needle;
+        bool isCircular;
+        float value = 0.f, minVal = 0.f, maxVal = 1.f;
+        float minAngle, maxAngle;
+        float physLimit;
     };
 
 }

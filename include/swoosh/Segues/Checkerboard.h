@@ -134,7 +134,7 @@ public:
       );
 #endif
 
-    shader.loadFromMemory(checkerboardShader, sf::Shader::Type::Fragment);
+    (void)shader.loadFromMemory(checkerboardShader, sf::Shader::Type::Fragment);
 
     shader.setUniform("cols", cols);
     shader.setUniform("rows", rows);

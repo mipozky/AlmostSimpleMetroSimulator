@@ -105,7 +105,7 @@ public:
       }
     );
 
-    shader.loadFromMemory(circleShader, sf::Shader::Type::Fragment);
+    (void)shader.loadFromMemory(circleShader, sf::Shader::Type::Fragment);
   }
 
   ~DiamondTileCircle() { }

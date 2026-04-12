@@ -27,12 +27,13 @@ public:
     surface.display(); // flip and ready the buffer
     sf::Texture temp(surface.getTexture()); // Make a copy of the source texture
 
+    const int halfW = (int)(windowSize.x / 2.0);
     sf::Sprite left(temp); 
-    left.setTextureRect(sf::IntRect({0, 0}, {(int)(windowSize.x/2.0), (int)windowSize.y}));
+    left.setTextureRect(sf::IntRect({0, 0}, {halfW, (int)windowSize.y}));
     left.setPosition(sf::Vector2f{0.0f, (float)(direction * alpha * (double)left.getTexture().getSize().y)});
 
     sf::Sprite right(temp);
-    right.setTextureRect(sf::IntRect({(int)(windowSize.x/2.0), 0}, {(int)windowSize.x, (int)windowSize.y}));
+    right.setTextureRect(sf::IntRect({halfW, 0}, {(int)windowSize.x - halfW, (int)windowSize.y}));
     right.setPosition(sf::Vector2f{(float)(windowSize.x/2.0f), (float)(direction * -alpha * (double)right.getTexture().getSize().y)});
 
     surface.clear();

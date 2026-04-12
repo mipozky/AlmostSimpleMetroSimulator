@@ -14,12 +14,20 @@ using namespace std;
 namespace train_e {
 
     enum SpriteSlot {
-        DoorRL = 0,
-        DoorRR = 1,
-        Salon = 2, 
-        DoorLL = 3,
-        DoorLR = 4,
-        Body = 5,
+		wheelFF = 0,
+		wheelFR = 1, 
+		wheelRF = 2,
+		wheelRR = 3,
+		bogeyFront = 4,
+		bogeyRear = 5,
+		Coupler = 6,
+        DoorRL = 0+7,
+        DoorRR = 1+7,
+        Salon = 2+7, 
+        Fdoor =2+8, 
+        DoorLL = 3+8,
+        DoorLR = 4+8,
+        Body = 5+8,
     };
 
     enum class WireIndex {
@@ -66,32 +74,71 @@ inline entt::entity makeWagonE(entt::registry& reg,
 {
     entt::entity e = reg.create();
 
-    
-    Texture& texBody = tm.get("textures\\wagons\\E\\body.png");
-    Texture& texSalon = tm.get("textures\\wagons\\E\\salon.png");
-    Texture& texDoorLL = tm.get("textures\\wagons\\E\\doorsLL.png");
-    Texture& texDoorLR = tm.get("textures\\wagons\\E\\doorsLR.png");
-    Texture& texDoorRL = tm.get("textures\\wagons\\E\\doorsRL.png");
-    Texture& texDoorRR = tm.get("textures\\wagons\\E\\doorsRR.png");
+    using Tx = Texture&;
 
-    
+    Tx texBody = tm.get("textures\\wagons\\E\\body.png");
+    Tx texSalon = tm.get("textures\\wagons\\E\\salon.png");
+    Tx texDoorLL = tm.get("textures\\wagons\\E\\doorsLL.png");
+    Tx texDoorLR = tm.get("textures\\wagons\\E\\doorsLR.png");
+    Tx texDoorRL = tm.get("textures\\wagons\\E\\doorsRL.png");
+    Tx texDoorRR = tm.get("textures\\wagons\\E\\doorsRR.png");
+    Tx couplerTex = tm.get("textures\\wagons\\E\\scep.png");
+    Tx bogeyFront = tm.get("textures\\wagons\\E\\bogeyF.png");
+    Tx bogeyRear = tm.get("textures\\wagons\\E\\bogeyR.png");
+    Tx wheelFF = tm.get("textures\\wagons\\E\\wheelFF.png");
+    Tx wheelFR = tm.get("textures\\wagons\\E\\wheelFR.png");
+    Tx wheelRF = tm.get("textures\\wagons\\E\\wheelRF.png");
+    Tx wheelRR = tm.get("textures\\wagons\\E\\wheelRR.png");
+	Tx Fdoor = tm.get("textures\\wagons\\E\\door_front.png");
     reg.emplace<train_base::RelPos>(e);
     reg.emplace<train_base::Movement>(e);
     reg.emplace<train_base::WireBus>(e);
     reg.emplace<train_base::PressureLines>(e);
-    reg.emplace<train_base::Length>(e);        
+    reg.emplace<train_base::Length>(e);
     reg.emplace<train_base::Scale>(e);
     reg.emplace<train_base::EventBuffer>(e);
-	
+
     auto& spl = reg.emplace<train_base::SpriteList>(e);
+    spl.add(Sprite(wheelFF));
+    spl.add(Sprite(wheelFR));
+    spl.add(Sprite(wheelRF));
+    spl.add(Sprite(wheelRR));
+    spl.add(Sprite(bogeyFront));
+    spl.add(Sprite(bogeyRear));
+    spl.add(Sprite(couplerTex));
     spl.add(Sprite(texDoorRL), animDrive(0, -50, 0.4f, animDrive::EaseType::Linear, true));
     spl.add(Sprite(texDoorRR), animDrive(0, 50, 0.4f, animDrive::EaseType::Linear, true));
     spl.add(Sprite(texSalon));
+	spl.add(Sprite(Fdoor));
     spl.add(Sprite(texDoorLL), animDrive(0, -50, 0.4f, animDrive::EaseType::Linear, true));
     spl.add(Sprite(texDoorLR), animDrive(0, 50, 0.4f, animDrive::EaseType::Linear, true));
     spl.add(Sprite(texBody));
+    //wheel diam 171-153 (pixels in texture)
+    // ibis paint measurements (Y, invertedX) → converted to SFML (X, Y):
+    //wheel FF center: ibis(171,679) → SFML(115, 171)
+    //wheel FR center: ibis(171,597) → SFML(197, 171)
+    //wheel RF center: ibis(171,198) → SFML(596, 171)
+    //wheel RR center: ibis(171,116) → SFML(678, 171)
 
-    
+    using S = train_e::SpriteSlot;
+    // Wheel textures are full-canvas layers (same 794px canvas as body).
+    // ibis(Y, invertedX) → SFML(X=794-ibis2, Y=ibis1):
+    //   wheelFF: canvas(115, 171)   wheelFR: canvas(197, 171)
+    //   wheelRF: canvas(596, 171)   wheelRR: canvas(678, 171)
+    //
+    // SFML: origin is placed at 'position', so:
+    //   top-left of sprite = position - origin * scale
+    // For full-canvas layer (top-left must sit at wagPos):
+    //   wagPos = (relPos + wagPos) - origin * scale  →  relPos = origin * scale (scale=2)
+    spl.sprites[S::wheelFF].sprite.setOrigin(Vector2f(115, 171));
+    spl.sprites[S::wheelFR].sprite.setOrigin(Vector2f(197, 171));
+    spl.sprites[S::wheelRF].sprite.setOrigin(Vector2f(596, 171));
+    spl.sprites[S::wheelRR].sprite.setOrigin(Vector2f(678, 171));
+    spl.sprites[S::wheelFF].relPos = Vector2f(115 * 2, 171 * 2);  // = (230, 342)
+    spl.sprites[S::wheelFR].relPos = Vector2f(197 * 2, 171 * 2);  // = (394, 342)
+    spl.sprites[S::wheelRF].relPos = Vector2f(596 * 2, 171 * 2);  // = (1192, 342)
+    spl.sprites[S::wheelRR].relPos = Vector2f(678 * 2, 171 * 2);  // = (1356, 342)
+
     reg.emplace<train_e::DoorSystem>(e);
     reg.emplace<train_e::VudLamp>(e);
     reg.emplace<train_e::Controller>(e);
@@ -104,8 +151,11 @@ inline entt::entity makeWagonE(entt::registry& reg,
         Texture& texSw3 = tm.get("textures\\wagons\\E\\interface\\right_switch_off.png");
         Texture& texSw3on = tm.get("textures\\wagons\\E\\interface\\right_switch_on.png");
         Texture& texVUD = tm.get("textures\\wagons\\E\\interface\\VUD_light.png");
-        Texture& texControlollerBase = tm.get("textures\\wagons\\E\\interface\\controller_base.png");
-        Texture& texControlollerHandle = tm.get("textures\\wagons\\E\\interface\\controller_handle.png");
+        Texture& texControllerBase = tm.get("textures\\wagons\\E\\interface\\controller_base.png");
+        Texture& texControllerHandle = tm.get("textures\\wagons\\E\\interface\\controller_handle.png");
+		Texture& texControllerTop = tm.get("textures\\wagons\\E\\interface\\controller_top.png");
+		Texture& speedGauge = tm.get("textures\\wagons\\E\\interface\\speed_gauge.png");
+		Texture& speedNeedle = tm.get("textures\\wagons\\E\\interface\\speed_arrow.png");
 
         auto& ui = reg.emplace<train_base::TrainUi>(e);
         if (!ui.font.openFromFile("fonts/consolas.ttf"))
@@ -126,17 +176,11 @@ inline entt::entity makeWagonE(entt::registry& reg,
 
         
         entt::registry* regPtr = &reg;
-        ui.addButton(
-            Vector2f(50, 50),
-            Vector2f(pPos.x + 104, pPos.y + 260),
-            Color::Transparent, ui.font, "", window,
-            [regPtr, e]() { regPtr->get<train_e::DoorSystem>(e).LdoorsOpen = true; }
-        );
         Vector2f leverSize(400,200 );         
         Vector2f leverPos(390, 190);          
         ui.addLever(Vector2f(-150, (window->getSize().y-(593))),leverSize,leverPos, Color::Transparent, ui.font, "", window,
-            texControlollerHandle, Vector2f(0, 0),
-            texControlollerBase, Vector2f(0, 0),
+            texControllerHandle, Vector2f(0, 0),
+            texControllerBase, Vector2f(0, 0),
             Vector2f(396, 322), 115, 312-360-115, 7,
             [regPtr, e]() {
 
@@ -147,7 +191,16 @@ inline entt::entity makeWagonE(entt::registry& reg,
             }
 		);
         ui.levers[0].startUpdatePos(3);
-		
+        ui.addGauge(Vector2f(300, 300), Vector2f(window->getSize().x -300, 0), window,
+            speedGauge, speedNeedle, Vector2f(0, 0), Vector2f(241, 240),
+			0.f, 100.f, 0, 90, 10
+		);
+        ui.addButton(
+            Vector2f(50, 50),
+            Vector2f(pPos.x + 104, pPos.y + 260),
+            Color::Transparent, ui.font, "", window,
+            [regPtr, e]() { regPtr->get<train_e::DoorSystem>(e).LdoorsOpen = true; }
+        );
         ui.addButton(
             Vector2f(46, 45),
             Vector2f(pPos.x + 335.5f, pPos.y + 197.5f),
@@ -219,7 +272,7 @@ namespace train_e_systems {
     inline void simWagonE(entt::registry& reg,
         entt::entity e,
         const vector<MEvent>& input,
-        float dt)
+        double dt)
     {
         auto& mv   = reg.get<train_base::Movement>(e);
         auto& ds   = reg.get<train_e::DoorSystem>(e);
@@ -231,17 +284,22 @@ namespace train_e_systems {
         using W = train_e::WireIndex;
         bool isHead = reg.all_of<train_base::IsHead>(e);
 
-        
+        //wheel diam 171-153 
+        //wheel1 center 171 679
+        //wheel2 center 171 597
+        //wheel3 center 171 198
+        //wheel3 center 171 116
+
+
         if (isHead) {
             auto& ui = reg.get<train_base::TrainUi>(e);
+			
             updateUiSprites(ui);
-
-            
             reg.get<train_e::KeyListener>(e).process(input);
 			mv.accel = reg.get<train_e::Controller>(e).pos * .4f;
 			mv.speed += mv.accel*dt;
 			mv.distanceTaken = false;
-            
+            ui.gauges[0].setValue(abs(mv.speed));
             wb.wires[(int)W::VUD].self        = ds.doorsClosed ? 1 : 0;
             wb.wires[(int)W::DoorsLeft].self  = ds.LdoorsOpen  ? 1 : 0;
             wb.wires[(int)W::DoorsRight].self = ds.RdoorsOpen  ? 1 : 0;
@@ -261,7 +319,12 @@ namespace train_e_systems {
                 ds.RdoorsOpen = rightFromWire;
             }
         }
-
+        using S = train_e::SpriteSlot;
+        float deltaAngle = (mv.speed * METER_TO_PX * dt * 180.0f) / (M_PI * 171 - 153);
+        spl.sprites[S::wheelFF].sprite.setRotation(-degrees(deltaAngle) + spl.sprites[S::wheelFF].sprite.getRotation());
+        spl.sprites[S::wheelFR].sprite.setRotation(-degrees(deltaAngle) + spl.sprites[S::wheelFR].sprite.getRotation());
+        spl.sprites[S::wheelRF].sprite.setRotation(-degrees(deltaAngle) + spl.sprites[S::wheelRF].sprite.getRotation());
+        spl.sprites[S::wheelRR].sprite.setRotation(-degrees(deltaAngle) + spl.sprites[S::wheelRR].sprite.getRotation());
        
         using S = train_e::SpriteSlot;
         auto& s0 = spl.sprites[S::DoorRL];
@@ -300,7 +363,7 @@ namespace train_e_systems {
 
     inline void simAllWagonsE(entt::registry& reg,
         const vector<MEvent>& input,
-        float dt)
+        double dt)
     {
 
         auto view = reg.view<train_e::DoorSystem>();

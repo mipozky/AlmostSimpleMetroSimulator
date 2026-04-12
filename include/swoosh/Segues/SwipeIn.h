@@ -82,7 +82,7 @@ public:
       d = (int)((double)bottom.getTexture().getSize().y * alpha);
     }
 
-    top.setTextureRect(sf::IntRect({l, u}, {r, d}));
+    top.setTextureRect(sf::IntRect({l, u}, {r - l, d - u}));
 
     surface.clear();
     surface.draw(bottom);

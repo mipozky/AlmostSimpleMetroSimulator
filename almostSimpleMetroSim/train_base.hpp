@@ -146,6 +146,7 @@ namespace train_base {
         vector<mg::Button>  buttons;
         vector<mg::TickBox> switches;
 		vector<mg::Lever>   levers;
+		vector<mg::Gauge>   gauges;
         vector<Sprite>      uiSprites;
         Font font;
 
@@ -166,6 +167,18 @@ namespace train_base {
                 baseSpr, baseSpriteOffset,
                 hingeloc, startAngle_, moveAngle, positions, false, cb);
 		}
+        void addGauge(Vector2f size, Vector2f pos, RenderWindow* window,
+            const Texture& base, const Texture& needleTex, Vector2f spriteOffset, Vector2f hinge,
+            float minVal, float maxVal,    
+            float minAngle, float maxAngle,   
+            float physLimitDegrees,            
+            bool circular = false)
+        {
+            gauges.emplace_back(size, pos, window,
+                base, needleTex, spriteOffset, hinge,
+                minVal, maxVal, minAngle, maxAngle,
+                physLimitDegrees, circular);
+		}
         void addSwitch(Vector2f size, Vector2f pos, const Font& font,
             string text, RenderWindow* window, function<void()> cb,
             Texture& boxTex, Texture& checkTex, Texture& negTex)
@@ -185,6 +198,7 @@ namespace train_base {
             for (auto& b : buttons)   b.draw();
             for (auto& s : switches)  s.draw();
 			for (auto& l : levers)    l.draw();
+			for (auto& g : gauges)    g.draw();
         }
     };
 
@@ -258,4 +272,4 @@ namespace train_base_systems {
         return reg.get<train_base::Movement>(e).speed;
 	}
 
-} // namespace train_base_systems
+} 

@@ -38,10 +38,10 @@ public:
     tunnels.erase(std::remove_if(tunnels.begin(), tunnels.end(),
                                  [&](const tunnel &T) {
                                    return T.spr.getPosition().x >
-                                          (float)window->getSize().x;
+                                          (float)window->getSize().x+500;
                                  }),
                   tunnels.end());
-    if (tunnels.empty() || tunnels.front().spr.getPosition().x > 0.f) {
+    if (tunnels.empty() || tunnels.front().spr.getPosition().x > -500.f) {
       float newX =
           tunnels.empty() ? 0.f : tunnels.front().spr.getPosition().x - w;
 

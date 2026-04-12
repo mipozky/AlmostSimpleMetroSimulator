@@ -11,6 +11,7 @@
 #include <entt/entt.hpp>
 #include <TGUI/TGUI.hpp>
 #include <TGUI/Backend/SFML-Graphics.hpp>
+#define METER_TO_PX 71.1f
 #include "TextureManager.hpp"
 #include "MGraphics.hpp"
 #include "mevent.hpp"
@@ -18,6 +19,8 @@
 #include "train_base.hpp"
 #include "703_E.hpp"
 #include "includes.h"
+bool showfps = false;
+bool simQuality = false;
 #include "console.hpp"
 #include <SFML/OpenGL.hpp>
 #include <consoleapi3.h>
@@ -26,11 +29,12 @@
 using namespace std;
 using namespace sf;
 
+
+
 //sf::RenderWindow window;
-void crash() {
-    std::vector<int> v;
-    int i = v[0xfffffffffffffff2];
-}
+
+float simSpeed = 1.f;
+
 void failureDraw(Console&console, tgui::Gui& gui, RenderWindow*window) {
     window->setActive(true);
 	console.log("Fail draw enabled");
@@ -72,6 +76,13 @@ struct Consist {
     void updateWires(entt::registry& reg) {
         train_base_systems::updateWires(reg, order);
     }
+    void syncSpeed(entt::registry& reg) {
+		float speed = reg.get<train_base::Movement>(head()).speed;
+        for (entt::entity e : order) {
+            auto& mv = reg.get<train_base::Movement>(e);
+            mv.speed = speed;
+        }
+	}
 }; 
 
 void renderingThread(RenderWindow* window,
@@ -83,6 +94,16 @@ void renderingThread(RenderWindow* window,
 	atomic<bool>& renderFailed
 )
 {
+	Font font;
+	font.openFromFile("fonts\\consolas.ttf");
+    Text fpsCounter{ font };
+	Text simQualityCounter{ font };
+	fpsCounter.setCharacterSize(24);
+	fpsCounter.setFillColor(sf::Color::White);
+	fpsCounter.setPosition(Vector2f(10.f, 10.f));
+    simQualityCounter.setCharacterSize(24);
+    simQualityCounter.setFillColor(sf::Color::White);
+    simQualityCounter.setPosition(Vector2f(10.f, 40.f));
     try {
         window->clear({ 0,0,0 });
         window->display();
@@ -96,16 +117,6 @@ void renderingThread(RenderWindow* window,
 		//throw runtime_error("Simulated render failure");
         while (running.load() && window->isOpen()) {
             auto frameStart = chrono::steady_clock::now();
-
-            // FPS counter
-            auto dt = chrono::duration_cast<chrono::seconds>(frameStart - lastFpsTime);
-            if (dt.count() >= 1) {
-                fps = counter / (double)dt.count();
-                counter = 0;
-                lastFpsTime = frameStart;
-                cout << "FPS: " << fps << "\n";
-            }
-
             window->clear();
             tunnels.draw();
             train_base_systems::drawAll(reg, *window);
@@ -115,9 +126,25 @@ void renderingThread(RenderWindow* window,
                 ShowWindow(hwnd, SW_MINIMIZE);
 
             gui.draw();
+            auto dt = chrono::duration_cast<chrono::seconds>(frameStart - lastFpsTime);
+            if (dt.count() >= 1) {
+                fps = counter / (double)dt.count();
+                counter = 0;
+                lastFpsTime = frameStart;
+            }
+            if (showfps) {
+               fpsCounter.setString("FPS: " + to_string((int)fps));
+                    window->draw(fpsCounter);
+            }
+            if(simQuality) {
+                simQualityCounter.setString("SQ: " + to_string(simSpeed));
+                window->draw(simQualityCounter);
+			}
+            
 
             window->display();
             ++counter;
+
             auto elapsed = chrono::steady_clock::now() - frameStart;
             if (elapsed < targetFrame)
                 this_thread::sleep_for(targetFrame - elapsed);
@@ -139,55 +166,75 @@ void simulator(entt::registry& reg,
     Console& console)
 {
     try {
+
         vector<MEvent> inputEvents;
         inputEvents.reserve(64);
-		bool first = true;
-        tunnels.generateTunnel();
-       
+
+        bool first = true;
+        auto lastTime = chrono::steady_clock::now();
 
         while (running.load()) {
-            auto start = chrono::steady_clock::now();
+            auto currentTime = chrono::steady_clock::now();
+            chrono::duration<float> deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
 
+            float dt = deltaTime.count();
 
+            // 1. Обробка вхідних подій
             inputEvents.clear();
+
+            // Забираємо події від вікна (клавіатура, миша), які прийшли через шину
             bus.drainTo(inputEvents);
 
-
+            // Збираємо події з буферів компонентів (наприклад, натискання кнопок в кабіні)
             {
                 auto view = reg.view<train_base::EventBuffer>();
-                for (auto e : view)
-                    for (auto& m : view.get<train_base::EventBuffer>(e).events)
+                for (auto e : view) {
+                    auto& buffer = view.get<train_base::EventBuffer>(e);
+                    for (auto& m : buffer.events) {
                         inputEvents.push_back(m);
+                    }
+                    buffer.events.clear(); // Очищаємо, щоб не обробляти двічі
+                }
             }
 
-
+            // 2. Симуляція систем поїзда
+            // Оновлюємо стан міжвагонних дротів
             consist.updateWires(reg);
-            train_e_systems::simAllWagonsE(reg, inputEvents, 0.01f);
-
+			consist.syncSpeed(reg);
+            // Запускаємо розрахунок електрики, дверей та руху (швидкість/прискорення)
+            train_e_systems::simAllWagonsE(reg, inputEvents, (double)dt);
+            simSpeed = dt;
+            // 3. Логіка тунелів
             if (first) {
                 tunnels.generateTunnel();
-                tunnels.moveTunnels(Vector2f(1500, 0.f));
+                // Початкове зміщення, щоб не починати з порожнечі
+                tunnels.moveTunnels(Vector2f(1500.f, 0.f));
                 first = false;
             }
             else {
                 tunnels.generateTunnel();
             }
-            float moved = train_base_systems::readSpeed(reg, consist.head());
-            tunnels.moveTunnels(Vector2f(moved, 0));
 
+            float speed = train_base_systems::readSpeed(reg, consist.head());
 
-            const auto frameTime = chrono::duration<double>(0.01);
-            auto elapsed = chrono::steady_clock::now() - start;
-            if (elapsed < frameTime)
-                this_thread::sleep_for(frameTime - elapsed);
+            tunnels.moveTunnels(Vector2f(speed * dt * METER_TO_PX, 0.f));
+
+            // 4. Стабілізація частоти оновлення (Target: 100 FPS / 10ms)
+            auto frameEnd = chrono::steady_clock::now();
+            auto processTime = frameEnd - currentTime;
+
+            // Якщо симуляція пройшла занадто швидко, спимо залишок часу
+            if (processTime < chrono::milliseconds(10)) {
+                this_thread::sleep_for(chrono::milliseconds(10) - processTime);
+            }
         }
     }
     catch (const exception& e) {
         cerr << "Error in simulation: " << e.what() << "\n";
-		console.on();
+        console.on();
     }
 }
-
 int main()
 {
     ShowWindow(GetConsoleWindow(), 0);
@@ -195,12 +242,11 @@ int main()
     settings.antiAliasingLevel = 16;
     sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
     sf::RenderWindow window(desktop, "ASMS", sf::State::Fullscreen, settings);
-
     tgui::Gui gui{ window };
     Console console{ gui };
 
     ConsoleBuf coutBuf(console, std::cout);
-    ConsoleBuf cerrBuf(console, std::cerr);
+    ConsoleBuf cerrBuf(console, std::cerr, true);
     ConsoleBuf clogBuf(console, std::clog);
 
     try {
@@ -222,7 +268,7 @@ int main()
             auto& rp = reg.get<train_base::RelPos>(e);
 
             
-            const Sprite& body = spl.sprites[5].sprite;
+            const Sprite& body = spl.sprites[train_e::SpriteSlot::Body].sprite;
             float posy = window.getSize().y / 2.f - body.getGlobalBounds().size.y / 2.f;
             float posx = i * body.getGlobalBounds().size.x - 130.f * i;
             rp.pos = { posx, posy };
@@ -271,6 +317,7 @@ int main()
                     m.system = kp->system;
                     bus.emit(m);
                 }
+                
             }
             this_thread::sleep_for(chrono::nanoseconds(100));
         }

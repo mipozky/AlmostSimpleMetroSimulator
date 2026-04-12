@@ -88,7 +88,7 @@ public:
         }
     );
 
-    shader.loadFromMemory(shaderProgram, sf::Shader::Type::Fragment);
+    (void)shader.loadFromMemory(shaderProgram, sf::Shader::Type::Fragment);
     shader.setUniform("power", wiggle_power);
   }
 

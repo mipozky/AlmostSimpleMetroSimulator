@@ -122,7 +122,7 @@ namespace swoosh {
         size_t start_pos = this->FAST_BLUR_SHADER.find(from);
         if (start_pos != std::string::npos) {
           this->FAST_BLUR_SHADER.replace(start_pos, from.length(), to);
-          shader.loadFromMemory(this->FAST_BLUR_SHADER, sf::Shader::Type::Fragment);
+          (void)shader.loadFromMemory(this->FAST_BLUR_SHADER, sf::Shader::Type::Fragment);
         }
         else {
           // should never happen
@@ -195,7 +195,7 @@ namespace swoosh {
           }
         );
 
-        shader.loadFromMemory(this->CHECKERBOARD_SHADER, sf::Shader::Type::Fragment);
+        (void)shader.loadFromMemory(this->CHECKERBOARD_SHADER, sf::Shader::Type::Fragment);
       }
 
       ~Checkerboard() { ; }
@@ -262,7 +262,7 @@ namespace swoosh {
 
         texture = nullptr;
         alpha = 0;
-        shader.loadFromMemory(this->CIRCLE_MASK_SHADER, sf::Shader::Type::Fragment);
+        (void)shader.loadFromMemory(this->CIRCLE_MASK_SHADER, sf::Shader::Type::Fragment);
       }
 
       ~CircleMask() { ; }
@@ -318,7 +318,7 @@ namespace swoosh {
           }
         );
 
-        shader.loadFromMemory(this->RETRO_BLIT_SHADER, sf::Shader::Type::Fragment);
+        (void)shader.loadFromMemory(this->RETRO_BLIT_SHADER, sf::Shader::Type::Fragment);
 
         kernelCols = kcols;
         kernelRows = krows;
@@ -438,7 +438,7 @@ namespace swoosh {
             }
         );
 
-        shader.loadFromMemory(this->CROSS_ZOOM_SHADER, sf::Shader::Type::Fragment);
+        (void)shader.loadFromMemory(this->CROSS_ZOOM_SHADER, sf::Shader::Type::Fragment);
       }
 
       ~CrossZoom() { }
@@ -497,7 +497,7 @@ namespace swoosh {
           }
         );
 
-        shader.loadFromMemory(this->MORPH_SHADER, sf::Shader::Type::Fragment);
+        (void)shader.loadFromMemory(this->MORPH_SHADER, sf::Shader::Type::Fragment);
 
         texture1 = texture2 = nullptr;
         alpha = strength = 0;
@@ -687,7 +687,7 @@ namespace swoosh {
           }
         );
 
-        shader.loadFromMemory(this->TURN_PAGE_VERT_SHADER, this->TURN_PAGE_FRAG_SHADER);
+        (void)shader.loadFromMemory(this->TURN_PAGE_VERT_SHADER, this->TURN_PAGE_FRAG_SHADER);
         triangleStripulate((int)size.x, (int)size.y, buffer, cellSize);
       }
 
@@ -736,7 +736,7 @@ namespace swoosh {
           }
         );
 
-        shader.loadFromMemory(this->PIXELATE_SHADER, sf::Shader::Type::Fragment);
+        (void)shader.loadFromMemory(this->PIXELATE_SHADER, sf::Shader::Type::Fragment);
       }
 
       ~Pixelate() {}
@@ -793,7 +793,7 @@ namespace swoosh {
           }
         );
 
-        shader.loadFromMemory(this->RADIAL_CCW_SHADER, sf::Shader::Type::Fragment);
+        (void)shader.loadFromMemory(this->RADIAL_CCW_SHADER, sf::Shader::Type::Fragment);
       }
 
       ~RadialCCW() { ; }

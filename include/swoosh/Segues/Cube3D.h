@@ -58,7 +58,7 @@ public:
 
     shader.setUniform("direction", static_cast<int>(direction));
 
-    if (direction == direction::right || direction == direction::up) {
+    if (direction == types::direction::right || direction == types::direction::up) {
       shader.setUniform("texture", temp);
       shader.setUniform("texture2", temp2);
     }
@@ -229,7 +229,7 @@ public:
       }
     );
 
-    shader.loadFromMemory(this->cube3DShaderProgram, sf::Shader::Type::Fragment);
+    (void)shader.loadFromMemory(this->cube3DShaderProgram, sf::Shader::Type::Fragment);
   }
 
   ~Cube3D() { }

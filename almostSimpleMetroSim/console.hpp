@@ -5,6 +5,8 @@
 #include <streambuf>
 #include <ostream>
 
+//bool showfps;
+
 class Console {
 public:
     Console(tgui::Gui& gui) {
@@ -44,9 +46,20 @@ public:
     }
     void log(const std::string& msg) {
         history->addText(msg + "\n");
+        if (history->getText().length() > 10000) {
+            auto currentText = history->getText();
+            history->setText(currentText.substr(5000));
+        }
     }
-    void logNoNewline(const std::string& msg) {
-        history->addText(msg);
+    void log(const std::string& msg, const tgui::Color& color) {
+        auto oldColor = history->getRenderer()->getTextColor();
+        history->getRenderer()->setTextColor(color);
+        log(msg);
+        history->getRenderer()->setTextColor(oldColor);
+        if (history->getText().length() > 6000) {
+            auto currentText = history->getText();
+            history->setText(currentText.substr(5000));
+        }
 	}
 private:
     void handleCommand(const std::string& cmd) {
@@ -54,11 +67,12 @@ private:
             log("> " + cmd);
             if (cmd == "clear") history->setText("");
             else if (cmd == "exit") exit(0);
-            else if (cmd == "crash") { std::vector<int> v(1); int i = v.at(2); }
+            else if (cmd == "toggleFps") showfps = !showfps;
+            else if (cmd == "toggleSimQuality") {simQuality = !simQuality;}
             else log("Unknown: " + cmd);
         }
         catch (const std::exception& e) {
-            log(std::string("Error: ") + e.what());
+            log(std::string("Error: ") + e.what(), tgui::Color::Red);
 		}
     }
 
@@ -73,7 +87,11 @@ public:
         : console_(console), stream_(stream), original_(stream.rdbuf(this))
     {
     }
-
+    ConsoleBuf(Console& console, std::ostream& stream, bool error)
+        : console_(console), stream_(stream), original_(stream.rdbuf(this))
+    {
+		this->error = error;
+    }
     ~ConsoleBuf() {
         stream_.rdbuf(original_);
     }
@@ -101,12 +119,15 @@ private:
         if (!buffer_.empty() && buffer_.back() == '\n')
             buffer_.pop_back();
         if (!buffer_.empty())
-            console_.log(buffer_);
+            if(error) console_.log(buffer_, tgui::Color::Red);
+            else console_.log(buffer_);
         buffer_.clear();
+        
     }
 
     Console& console_;
     std::ostream& stream_;
     std::streambuf* original_;
     std::string     buffer_;
+	bool error = false;
 };
