@@ -61,7 +61,7 @@ struct animDrive {
     }
 };
 
-struct wire { int self = 0, diff = 0; };
+struct wire { int val = 0; };
 
 
 struct fSprite {
@@ -82,40 +82,41 @@ struct fSprite {
 
 namespace train_base {
 
-    
+
     struct RelPos {
         Vector2f pos{};
     };
 
-   
+
     struct Movement {
         bool  distanceTaken = false;
-		float speed = 0.f;
-		float accel = 0.f;
+        float speed = 0.f;
+        float accel = 0.f;
     };
 
-    
+
     struct WireBus {
-        array<wire, 32> wires{};
+        array<wire, 32> local{};
+        array<wire, 32> train{};
     };
 
-    
+
     struct PressureLines {
         float trainLine = 0.f;
         float breakLine = 0.f;
     };
 
-    
+
     struct Length {
         int mmlength = 20000;
     };
 
-   
+
     struct Scale {
         Vector2f scale{ 1.f, 1.f };
     };
 
-    
+
     struct SpriteList {
         vector<fSprite> sprites;
 
@@ -124,7 +125,7 @@ namespace train_base {
             sprites.emplace_back(spr);
             sprites.back().anim = anim;
         }
-       
+
         void updatePositions(Vector2f wagPos) {
             for (auto& s : sprites)
                 s.sprite.setPosition(s.relPos + wagPos);
@@ -135,20 +136,19 @@ namespace train_base {
         }
     };
 
-    
+
     struct IsHead {};
 
-  
+
     struct EventBuffer {
         vector<MEvent> events;
     };
     struct TrainUi {
         vector<mg::Button>  buttons;
         vector<mg::TickBox> switches;
-		vector<mg::Lever>   levers;
-		vector<mg::Gauge>   gauges;
+        vector<mg::Lever>   levers;
+        vector<mg::Gauge>   gauges;
         vector<Sprite>      uiSprites;
-        Font font;
 
         void addButton(Vector2f size, Vector2f pos, Color color,
             const Font& font, string text,
@@ -161,24 +161,24 @@ namespace train_base {
             const Texture& baseSpr, Vector2f baseSpriteOffset, Vector2f hingeloc, float startAngle_,
             float moveAngle, int positions, function<void()> cb)
         {
-            levers.emplace_back(Vector2f(0, 0), pos,  handleColsize, handleColpos,color,
+            levers.emplace_back(Vector2f(0, 0), pos, handleColsize, handleColpos, color,
                 font, text, window,
                 handleSpr, handleSpriteOffset,
                 baseSpr, baseSpriteOffset,
                 hingeloc, startAngle_, moveAngle, positions, false, cb);
-		}
+        }
         void addGauge(Vector2f size, Vector2f pos, RenderWindow* window,
             const Texture& base, const Texture& needleTex, Vector2f spriteOffset, Vector2f hinge,
-            float minVal, float maxVal,    
-            float minAngle, float maxAngle,   
-            float physLimitDegrees,            
+            float minVal, float maxVal,
+            float minAngle, float maxAngle,
+            float physLimitDegrees,
             bool circular = false)
         {
             gauges.emplace_back(size, pos, window,
                 base, needleTex, spriteOffset, hinge,
                 minVal, maxVal, minAngle, maxAngle,
                 physLimitDegrees, circular);
-		}
+        }
         void addSwitch(Vector2f size, Vector2f pos, const Font& font,
             string text, RenderWindow* window, function<void()> cb,
             Texture& boxTex, Texture& checkTex, Texture& negTex)
@@ -191,21 +191,33 @@ namespace train_base {
         void checkEvents(const Event& ev) {
             for (auto& b : buttons)  b.checkPress(ev);
             for (auto& s : switches) s.checkPress(ev);
-			for (auto& l : levers)   l.CheckMovement(ev);
+            for (auto& l : levers)   l.CheckMovement(ev);
         }
         void draw(RenderWindow* window) {
             for (auto& spr : uiSprites) window->draw(spr);
             for (auto& b : buttons)   b.draw();
             for (auto& s : switches)  s.draw();
-			for (auto& l : levers)    l.draw();
-			for (auto& g : gauges)    g.draw();
+            for (auto& l : levers)    l.draw();
+            for (auto& g : gauges)    g.draw();
         }
     };
+    struct WagonCount {
+        int count = 1;
+	};
 
 }
 namespace train_base_systems {
 
-    
+    namespace wire_bus {
+
+        inline void writeWire(train_base::WireBus& wb, int idx, int val) {
+            wb.local[idx].val = val;
+        }
+        inline int readWire(const train_base::WireBus& wb, int idx) {
+            return wb.train[idx].val;
+        }
+    }
+
     inline void applyScale(entt::registry& reg, float coef = 1.f) {
         auto view = reg.view<train_base::Length, train_base::Scale, train_base::SpriteList>();
         for (auto e : view) {
@@ -252,21 +264,19 @@ namespace train_base_systems {
 
 
     inline void updateWires(entt::registry& reg, const vector<entt::entity>& order) {
-        array<wire, 32> total{};
+        array<int, 32> total{};
         for (auto e : order) {
             auto& wb = reg.get<train_base::WireBus>(e);
-            for (int i = 0; i < 32; i++) total[i].diff += wb.wires[i].self;
+            for (int i = 0; i < 32; i++)
+                total[i] += wb.local[i].val;
         }
         for (auto e : order) {
             auto& wb = reg.get<train_base::WireBus>(e);
-            array<wire, 32> set{};
-            for (int i = 0; i < 32; i++) {
-                set[i].diff = total[i].diff - wb.wires[i].self;
-                set[i].self = wb.wires[i].self;
-            }
-            wb.wires = set;
+            for (int i = 0; i < 32; i++)
+                wb.train[i].val = total[i];
         }
     }
+
     inline float readSpeed(entt::registry& reg, entt::entity e) {
         reg.get<train_base::Movement>(e).distanceTaken = true;
         return reg.get<train_base::Movement>(e).speed;

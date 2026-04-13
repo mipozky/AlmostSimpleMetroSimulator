@@ -12,7 +12,7 @@
 #include <TGUI/TGUI.hpp>
 #include <TGUI/Backend/SFML-Graphics.hpp>
 #define METER_TO_PX 71.1f
-#include "TextureManager.hpp"
+#include "AssetManager.hpp"
 #include "MGraphics.hpp"
 #include "mevent.hpp"
 #include "tunnel.hpp"
@@ -29,9 +29,7 @@ bool simQuality = false;
 using namespace std;
 using namespace sf;
 
-
-
-//sf::RenderWindow window;
+//#define KOSTIL
 
 float simSpeed = 1.f;
 
@@ -76,6 +74,12 @@ struct Consist {
     void updateWires(entt::registry& reg) {
         train_base_systems::updateWires(reg, order);
     }
+    void writeWagonCount(entt::registry& reg) {
+        int count = (int)order.size();
+        for (entt::entity e : order) {
+            reg.get<train_base::WagonCount>(e).count = count;
+        }
+	}
     void syncSpeed(entt::registry& reg) {
 		float speed = reg.get<train_base::Movement>(head()).speed;
         for (entt::entity e : order) {
@@ -83,6 +87,25 @@ struct Consist {
             mv.speed = speed;
         }
 	}
+    void update(entt::registry& reg) {
+		updateWires(reg);
+		syncSpeed(reg);
+        writeWagonCount(reg);
+	}
+
+    void addWagon(entt::registry& reg, entt::entity wagon) {
+        order.push_back(wagon);
+	}
+
+    void createConsist(entt::registry& reg, int wagonCount, RenderWindow* window, AssetManager& tm) {
+        if (wagonCount <= 0) return;
+        entt::entity head = makeWagonE(reg, window, tm, true);
+        addWagon(reg, head);
+        for (int i = 1; i < wagonCount; i++) {
+            entt::entity wagon = makeWagonE(reg, window, tm);
+			addWagon(reg, wagon);
+		}
+    }
 }; 
 
 void renderingThread(RenderWindow* window,
@@ -180,13 +203,9 @@ void simulator(entt::registry& reg,
 
             float dt = deltaTime.count();
 
-            // 1. Обробка вхідних подій
             inputEvents.clear();
-
-            // Забираємо події від вікна (клавіатура, миша), які прийшли через шину
             bus.drainTo(inputEvents);
 
-            // Збираємо події з буферів компонентів (наприклад, натискання кнопок в кабіні)
             {
                 auto view = reg.view<train_base::EventBuffer>();
                 for (auto e : view) {
@@ -194,21 +213,15 @@ void simulator(entt::registry& reg,
                     for (auto& m : buffer.events) {
                         inputEvents.push_back(m);
                     }
-                    buffer.events.clear(); // Очищаємо, щоб не обробляти двічі
+                    buffer.events.clear();
                 }
             }
+			consist.update(reg);
 
-            // 2. Симуляція систем поїзда
-            // Оновлюємо стан міжвагонних дротів
-            consist.updateWires(reg);
-			consist.syncSpeed(reg);
-            // Запускаємо розрахунок електрики, дверей та руху (швидкість/прискорення)
             train_e_systems::simAllWagonsE(reg, inputEvents, (double)dt);
             simSpeed = dt;
-            // 3. Логіка тунелів
             if (first) {
                 tunnels.generateTunnel();
-                // Початкове зміщення, щоб не починати з порожнечі
                 tunnels.moveTunnels(Vector2f(1500.f, 0.f));
                 first = false;
             }
@@ -220,11 +233,9 @@ void simulator(entt::registry& reg,
 
             tunnels.moveTunnels(Vector2f(speed * dt * METER_TO_PX, 0.f));
 
-            // 4. Стабілізація частоти оновлення (Target: 100 FPS / 10ms)
             auto frameEnd = chrono::steady_clock::now();
             auto processTime = frameEnd - currentTime;
 
-            // Якщо симуляція пройшла занадто швидко, спимо залишок часу
             if (processTime < chrono::milliseconds(10)) {
                 this_thread::sleep_for(chrono::milliseconds(10) - processTime);
             }
@@ -241,7 +252,12 @@ int main()
     sf::ContextSettings settings;
     settings.antiAliasingLevel = 16;
     sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
-    sf::RenderWindow window(desktop, "ASMS", sf::State::Fullscreen, settings);
+#ifdef KOSTIL
+    sf::RenderWindow window(desktop, "ASMS", sf::State::Windowed, settings);
+	window.setPosition({ 0, 0 });
+#else
+	sf::RenderWindow window(desktop, "ASMS", sf::State::Fullscreen, settings);
+#endif
     tgui::Gui gui{ window };
     Console console{ gui };
 
@@ -251,13 +267,12 @@ int main()
 
     try {
         
-        TextureManager tm;
-        tunnelSet tunnels(&window, tm.get("textures\\tunnels\\tunel_sq_t1.png"), { 0, 345 });
+        AssetManager tm;
+        tunnelSet tunnels(&window, tm.get<Texture>("textures\\tunnels\\tunel_sq_t1.png"), { 0, 345 });
         entt::registry reg;
         Consist consist;
-        consist.order.push_back(makeWagonE(reg, &window, tm, true));
-        consist.order.push_back(makeWagonE(reg, &window, tm, false));
 
+		consist.createConsist(reg, 2, &window, tm);
         
         train_base_systems::applyScale(reg);
 
