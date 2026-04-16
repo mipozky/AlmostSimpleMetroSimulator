@@ -203,33 +203,33 @@ inline entt::entity makeWagonE(entt::registry& reg,
         Texture& texVUD = tm.get<Texture>("textures\\wagons\\E\\interface\\VUD_light.png");
         Texture& texControllerBase = tm.get<Texture>("textures\\wagons\\E\\interface\\controller_base.png");
         Texture& texControllerHandle = tm.get<Texture>("textures\\wagons\\E\\interface\\controller_handle.png");
-		Texture& texControllerTop = tm.get<Texture>("textures\\wagons\\E\\interface\\controller_top.png");
-		Texture& speedGauge = tm.get<Texture>("textures\\wagons\\E\\interface\\speed_gauge.png");
-		Texture& speedNeedle = tm.get<Texture>("textures\\wagons\\E\\interface\\speed_arrow.png");
+        Texture& texControllerTop = tm.get<Texture>("textures\\wagons\\E\\interface\\controller_top.png");
+        Texture& speedGauge = tm.get<Texture>("textures\\wagons\\E\\interface\\speed_gauge.png");
+        Texture& speedNeedle = tm.get<Texture>("textures\\wagons\\E\\interface\\speed_arrow.png");
 
         auto& ui = reg.emplace<train_base::TrainUi>(e);
-		Font& uifont = tm.get<Font>("fonts/consolas.ttf");
+        Font& uifont = tm.get<Font>("fonts/consolas.ttf");
 
         Sprite pSpr(texPanel);
         pSpr.setScale(Vector2f(0.5f, 0.5f));
         pSpr.setPosition(Vector2f(760, 680));
-        ui.addUISprite(pSpr);                           
+        ui.addUISprite(pSpr);
 
         Sprite vudSpr(texVUD);
         vudSpr.setPosition(pSpr.getPosition());
         vudSpr.setScale(pSpr.getScale());
-        ui.addUISprite(vudSpr);                         
+        ui.addUISprite(vudSpr);
 
         Vector2f pPos = pSpr.getPosition();
 
-        
+
         entt::registry* regPtr = &reg;
-        Vector2f leverSize(400,200 );         
-        Vector2f leverPos(390, 190);          
-        ui.addLever(Vector2f(-150, (window->getSize().y-(593))),leverSize,leverPos, Color::Transparent, uifont, "", window,
+        Vector2f leverSize(400, 200);
+        Vector2f leverPos(390, 190);
+        ui.addLever(Vector2f(-150, (window->getSize().y - (593))), leverSize, leverPos, Color::Transparent, uifont, "", window,
             texControllerHandle, Vector2f(0, 0),
             texControllerBase, Vector2f(0, 0),
-            Vector2f(396, 322), 115, 312-360-115, 7,
+            Vector2f(396, 322), 115, 312 - 360 - 115, 7,
             [regPtr, e]() {
 
                 auto& ui = regPtr->get<train_base::TrainUi>(e);
@@ -237,12 +237,12 @@ inline entt::entity makeWagonE(entt::registry& reg,
                 int leverPos = ui.levers[0].pos;
                 regPtr->get<train_e::Controller>(e).pos = leverPos - 3;
             }
-		);
+        );
         ui.levers[0].startUpdatePos(3);
-        ui.addGauge(Vector2f(300, 300), Vector2f(window->getSize().x -300, 0), window,
+        ui.addGauge(Vector2f(300, 300), Vector2f(window->getSize().x - 300, 0), window,
             speedGauge, speedNeedle, Vector2f(0, 0), Vector2f(241, 240),
-			0.f, 100.f, 0, 90, 10
-		);
+            0.f, 100.f, 0, 90, 10
+        );
         ui.addButton(
             Vector2f(50, 50),
             Vector2f(pPos.x + 104, pPos.y + 260),
@@ -266,30 +266,30 @@ inline entt::entity makeWagonE(entt::registry& reg,
             Vector2f(pPos.x + 33, pPos.y + 394),
             Color::Transparent, uifont, "", window,
             mg::nothing
-		);
-		ui.addButton(//osveschenie otkl-zvonok
+        );
+        ui.addButton(//osveschenie otkl-zvonok
             Vector2f(50, 50),
             Vector2f(pPos.x + 158, pPos.y + 394),
             Color::Transparent, uifont, "", window,
             mg::nothing
-		);
+        );
         ui.addButton(//vozvrat rp
             Vector2f(50, 50),
             Vector2f(pPos.x + 283, pPos.y + 394),
             Color::Transparent, uifont, "", window,
-			mg::nothing
-	    );
+            mg::nothing
+        );
         ui.addButton(//signalizaciya neispravnosti
             Vector2f(50, 50),
             Vector2f(pPos.x + 416, pPos.y + 394),
             Color::Transparent, uifont, "", window,
             mg::nothing
-		);
+        );
         ui.addButton(//signalizaciya dverey
             Vector2f(50, 50),
             Vector2f(pPos.x + 543, pPos.y + 394),
             Color::Transparent, uifont, "", window,
-			mg::nothing
+            mg::nothing
         );
         ui.addButton(// i dunno
             Vector2f(50, 50),
@@ -313,35 +313,52 @@ inline entt::entity makeWagonE(entt::registry& reg,
         entt::registry* regPtr2 = &reg;
 
         kl.bind(Keyboard::Key::W, [regPtr2, e]() {
-            int &pos = regPtr2->get<train_e::Controller>(e).pos;
-			pos += 1;
-			if (pos > 3) pos = 3;
+            int& pos = regPtr2->get<train_e::Controller>(e).pos;
+            pos += 1;
+            if (pos > 3) pos = 3;
             auto& uil = regPtr2->get<train_base::TrainUi>(e);
-			uil.levers[0].startUpdatePos(pos + 3);
-        });
+            uil.levers[0].startUpdatePos(pos + 3);
+            });
         kl.bind(Keyboard::Key::S, [regPtr2, e]() {
             int& pos = regPtr2->get<train_e::Controller>(e).pos;
             pos -= 1;
             if (pos < -3) pos = -3;
             auto& uil = regPtr2->get<train_base::TrainUi>(e);
             uil.levers[0].startUpdatePos(pos + 3);
-        });
+            });
         kl.bind(Keyboard::Key::V, [regPtr2, e]() {
             auto& ds = regPtr2->get<train_e::DoorSystem>(e);
             ds.doorsClosed = !ds.doorsClosed;
             if (ds.doorsClosed) { ds.LdoorsOpen = false; ds.RdoorsOpen = false; }
             auto& ui = regPtr2->get<train_base::TrainUi>(e);
             if (!ui.switches.empty()) ui.switches[0].tick();
-        });
+            });
         kl.bind(Keyboard::Key::A, [regPtr2, e]() {
             auto& ds = regPtr2->get<train_e::DoorSystem>(e);
             if (!ds.doorsClosed) ds.LdoorsOpen = true;
-        });
+            });
         kl.bind(Keyboard::Key::D, [regPtr2, e]() {
             auto& ds = regPtr2->get<train_e::DoorSystem>(e);
             if (!ds.doorsClosed) ds.RdoorsOpen = true;
-        });
-        
+            });
+        kl.bind(Keyboard::Key::I, [regPtr2]() {
+            auto view = regPtr2->view<train_base::SpriteList, train_e::DoorSystem>();
+            for (auto ent : view) {
+                auto& spl = view.get<train_base::SpriteList>(ent);
+                auto& bodySpr = spl.sprites[train_e::SpriteSlot::Body].sprite;
+                
+                bool isVisible = (bodySpr.getColor().a == 255);
+                Color newColor = isVisible ? Color(255, 255, 255, 0) : Color(255, 255, 255, 255);
+                
+                bodySpr.setColor(newColor);
+                spl.sprites[train_e::SpriteSlot::DoorLL].sprite.setColor(newColor);
+                spl.sprites[train_e::SpriteSlot::DoorLR].sprite.setColor(newColor);
+                spl.sprites[train_e::SpriteSlot::DoorRL].sprite.setColor(newColor);
+                spl.sprites[train_e::SpriteSlot::DoorRR].sprite.setColor(newColor);
+                spl.sprites[train_e::SpriteSlot::Fdoor].sprite.setColor(newColor);
+            }
+            });
+
     }
 
     return e;

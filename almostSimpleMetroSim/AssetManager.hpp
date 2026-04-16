@@ -41,7 +41,7 @@ class AssetManager {
         T& get(const std::string& path) {
             auto it = assets.find(path);
             if (it == assets.end()) {
-                if constexpr (std::is_same_v<T, sf::Music>) {
+                if constexpr (is_same_v<T, sf::Music>) {
                     auto music = std::make_unique<sf::Music>();
                     if (!music->openFromFile(path))
                         throw std::runtime_error("Open failed: " + path);

@@ -44,6 +44,9 @@ public:
     void on(){
 		panel->setVisible(true);
     }
+	bool isVisible() const {
+		return panel->isVisible();
+	}
     void log(const std::string& msg) {
         history->addText(msg + "\n");
         if (history->getText().length() > 10000) {

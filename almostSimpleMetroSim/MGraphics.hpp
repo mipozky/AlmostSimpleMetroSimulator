@@ -432,16 +432,12 @@ namespace mg {
             physLimit(physLimitDegrees), isCircular(circular), needle(needleTex)
         {
             this->needle.setOrigin(hinge);
-
-            // FIX: Add the hinge to the body position to place the pivot correctly
-            // If spriteOffset is (0,0), the needle pivot will sit exactly 
-            // at the 'hinge' coordinates relative to the top-left of the gauge.
             this->needle.setPosition(body.getPosition() + spriteOffset + hinge);
         }
 
         void setValue(float v) {
             value = v;
-            updateNeedle(); // Update rotation immediately when value changes
+            updateNeedle(); 
         }
 
         void updateNeedle() {

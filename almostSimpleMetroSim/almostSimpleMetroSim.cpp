@@ -127,6 +127,7 @@ void renderingThread(RenderWindow* window,
     simQualityCounter.setCharacterSize(24);
     simQualityCounter.setFillColor(sf::Color::White);
     simQualityCounter.setPosition(Vector2f(10.f, 40.f));
+    window->setVerticalSyncEnabled(true);
     try {
         window->clear({ 0,0,0 });
         window->display();
@@ -136,8 +137,6 @@ void renderingThread(RenderWindow* window,
         int   counter = 0;
         float fps = 0.f;
         auto  lastFpsTime = chrono::steady_clock::now();
-        const chrono::duration<double> targetFrame(1.0 / 144.0);
-		//throw runtime_error("Simulated render failure");
         while (running.load() && window->isOpen()) {
             auto frameStart = chrono::steady_clock::now();
             window->clear();
@@ -167,10 +166,6 @@ void renderingThread(RenderWindow* window,
 
             window->display();
             ++counter;
-
-            auto elapsed = chrono::steady_clock::now() - frameStart;
-            if (elapsed < targetFrame)
-                this_thread::sleep_for(targetFrame - elapsed);
         }
     }
     catch (const exception& e) {
@@ -193,7 +188,6 @@ void simulator(entt::registry& reg,
         vector<MEvent> inputEvents;
         inputEvents.reserve(64);
 
-        bool first = true;
         auto lastTime = chrono::steady_clock::now();
 
         while (running.load()) {
@@ -220,24 +214,11 @@ void simulator(entt::registry& reg,
 
             train_e_systems::simAllWagonsE(reg, inputEvents, (double)dt);
             simSpeed = dt;
-            if (first) {
-                tunnels.generateTunnel();
-                tunnels.moveTunnels(Vector2f(1500.f, 0.f));
-                first = false;
-            }
-            else {
-                tunnels.generateTunnel();
-            }
+            tunnels.simulate((float)dt * train_base_systems::readSpeed(reg, consist.head()) * METER_TO_PX);
 
-            float speed = train_base_systems::readSpeed(reg, consist.head());
-
-            tunnels.moveTunnels(Vector2f(speed * dt * METER_TO_PX, 0.f));
-
-            auto frameEnd = chrono::steady_clock::now();
-            auto processTime = frameEnd - currentTime;
-
-            if (processTime < chrono::milliseconds(10)) {
-                this_thread::sleep_for(chrono::milliseconds(10) - processTime);
+            auto target = currentTime + chrono::milliseconds(10);
+            while (chrono::steady_clock::now() < target) {
+                this_thread::yield();
             }
         }
     }
@@ -320,17 +301,18 @@ int main()
                     train_base_systems::checkUIEvents(reg, *ev);
                 }
                 else if (const auto* kp = ev->getIf<Event::KeyPressed>()) {
-                    if (kp->code == sf::Keyboard::Key::Grave)
-                        console.toggle();
-                    MEvent m;
-                    m.type = "KeyPressed";
-                    m.sender = "window";
-                    m.key = kp->code;
-                    m.alt = kp->alt;
-                    m.control = kp->control;
-                    m.shift = kp->shift;
-                    m.system = kp->system;
-                    bus.emit(m);
+                    if (kp->code == sf::Keyboard::Key::Grave)console.toggle();
+                    if (!console.isVisible()) {
+                        MEvent m;
+                        m.type = "KeyPressed";
+                        m.sender = "window";
+                        m.key = kp->code;
+                        m.alt = kp->alt;
+                        m.control = kp->control;
+                        m.shift = kp->shift;
+                        m.system = kp->system;
+                        bus.emit(m);
+                    }
                 }
                 
             }

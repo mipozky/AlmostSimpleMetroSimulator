@@ -68,7 +68,6 @@ struct fSprite {
     Sprite    sprite;
     Vector2f  relPos;
     animDrive anim;
-    bool      drawn = true;
 
     explicit fSprite(const Sprite& spr) : sprite(spr), relPos(spr.getPosition()) {}
 
