@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -75,7 +75,9 @@
 #   endif
 #endif
 
-#include <string>
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <string>
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -85,14 +87,20 @@
     #define TGUI_GL_CHECK(expr) expr
 #endif
 
+#if !TGUI_BUILD_AS_CXX_MODULE || defined(TGUI_BUILDING_OPENGL_MODULE)
 namespace tgui
 {
     namespace priv
     {
+#if TGUI_BUILD_AS_CXX_MODULE
+        TGUI_MODULE_EXPORT
+#else
+        inline
+#endif
 #if !defined(NDEBUG) && !defined(TGUI_NO_RUNTIME_WARNINGS)
-        inline void checkAndLogErrorOpenGL(const char* file, unsigned int line, const char* expression)
+        void checkAndLogErrorOpenGL(const char* file, unsigned int line, const char* expression)
         {
-            const GLenum errorCode = glGetError();
+            GLenum errorCode = glGetError();
             if (errorCode == GL_NO_ERROR)
                 return;
 
@@ -108,19 +116,20 @@ namespace tgui
             default:                    error = "Unknown error";        break;
             }
 
-            const std::string fileStr = file;
+            std::string fileStr = file;
             TGUI_PRINT_WARNING("An internal OpenGL call failed in "
                 + fileStr.substr(fileStr.find_last_of("\\/") + 1)
                 + "(" + std::to_string(line) + ")."
                 + "\nExpression:\n   " + expression + "\nError description:\n   " + error + "\n");
         }
 #else
-        inline void checkAndLogErrorOpenGL(const char*, unsigned int, const char*)
+        void checkAndLogErrorOpenGL(const char*, unsigned int, const char*)
         {
         }
 #endif
     }
 }
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

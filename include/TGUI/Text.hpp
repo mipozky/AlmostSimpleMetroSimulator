@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -33,18 +33,13 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     class BackendText;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if TGUI_COMPILED_WITH_CPP_VER >= 20
-    // Inline is needed here if we want to build a C++20 module
-    inline constexpr unsigned int AutoTextSize = 0xFFFFFFFF;
-#else
     constexpr unsigned int AutoTextSize = 0xFFFFFFFF;
-#endif
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Backend-independent wrapper around the backend-specific text class
@@ -61,10 +56,9 @@ namespace tgui
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         struct Blueprint
         {
-            unsigned int characterSize = 0;
-            unsigned int style = 0;
+            unsigned int characterSize;
+            unsigned int style;
             Color        color;
-            String       link;
             String       text;
             Vector2u     gapSize;
         };

@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -29,7 +29,7 @@
 
 // Version of the library
 #define TGUI_VERSION_MAJOR 1
-#define TGUI_VERSION_MINOR 12
+#define TGUI_VERSION_MINOR 8
 #define TGUI_VERSION_PATCH 0
 
 // Detect the platform, to enable platform-specific code
@@ -66,7 +66,7 @@
             #define TGUI_API __declspec(dllimport)
         #endif
 
-        // For Visual C++ compilers, we also need to turn off the annoying C4251 warning
+		// For Visual C++ compilers, we also need to turn off the annoying C4251 warning
         #ifdef _MSC_VER
             #pragma warning(disable: 4251)
         #endif
@@ -85,7 +85,6 @@
 #define TGUI_HAS_WINDOW_BACKEND_RAYLIB 0
 
 #define TGUI_HAS_RENDERER_BACKEND_SFML_GRAPHICS 1
-#define TGUI_HAS_RENDERER_BACKEND_SDL_GPU 0
 #define TGUI_HAS_RENDERER_BACKEND_SDL_RENDERER 0
 #define TGUI_HAS_RENDERER_BACKEND_OPENGL3 0
 #define TGUI_HAS_RENDERER_BACKEND_GLES2 0
@@ -98,7 +97,6 @@
 
 #define TGUI_HAS_BACKEND_SFML_GRAPHICS 1
 #define TGUI_HAS_BACKEND_SFML_OPENGL3 0
-#define TGUI_HAS_BACKEND_SDL_GPU 0
 #define TGUI_HAS_BACKEND_SDL_RENDERER 0
 #define TGUI_HAS_BACKEND_SDL_OPENGL3 0
 #define TGUI_HAS_BACKEND_SDL_GLES2 0
@@ -121,22 +119,34 @@
 #define TGUI_USE_SYSTEM_NANOSVG 0
 #define TGUI_USE_SYSTEM_AURORA 0
 
-// Define that specifies the mininmum C++ support in both the TGUI code and user code.
-// This constant can be lower than the actual C++ standard version used to compile with,
+// Define that specifies the mininmum c++ support in both the TGUI code and user code.
+// This constant can be lower than the actual c++ standard version used to compile with,
 // as long as this constant is the same when compiling TGUI and when using the TGUI libs.
-#define TGUI_COMPILED_WITH_CPP_VER 17
+#define TGUI_COMPILED_WITH_CPP_VER 14
 
-// Include the version header when C++20 is available to use the library feature-testing macros
+#define TGUI_BUILD_AS_CXX_MODULE 0
+
+#if TGUI_EXPERIMENTAL_USE_STD_MODULE
+    import std;
+#endif
+
+// When TGUI_BUILD_AS_CXX_MODULE is set to 1, TGUI_MODULE_EXPORT will be defined as "export" while
+// TGUI is being build. This define takes place before this header is included.
+#ifndef TGUI_MODULE_EXPORT
+    #define TGUI_MODULE_EXPORT
+#endif
+
+// Include the version header when c++20 is available to use the library feature-testing macros
 #if TGUI_COMPILED_WITH_CPP_VER >= 20
     #include <version>
 #elif defined(__has_include)
-    // Try including the header even when TGUI itself wasn't compiled with C++20
+    // Try including the header even when TGUI itself wasn't compiled with c++20
     #if __has_include(<version>)
         #include <version>
     #endif
 #endif
 
-// Enable the use of std::filesystem if TGUI is built with C++17 with a new enough compiler.
+// Enable the use of std::filesystem if TGUI is built with c++17 with a new enough compiler.
 // Although GCC and clang supported it before version 9, this is the first version where no
 // additional library has to be linked in order to use std::filesystem. This is also the
 // reason why we can't rely on __cpp_lib_filesystem for this.
@@ -198,16 +208,20 @@
 #endif
 
 #if !defined(NDEBUG) && !defined(TGUI_NO_RUNTIME_WARNINGS)
-    #include <iostream>
+    #if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+        #include <iostream>
+    #endif
     #define TGUI_PRINT_WARNING(msg) { std::cerr << "TGUI warning: " << msg << "\n"; }
 #else
     #define TGUI_PRINT_WARNING(msg)
 #endif
 
-#include <cassert>
 #if !defined(NDEBUG) && !defined(TGUI_DISABLE_ASSERTS)
-    #include <iostream>
-    #include <exception>
+    #include <cassert>
+    #if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+        #include <iostream>
+        #include <exception>
+    #endif
     #define TGUI_ASSERT(condition, msg) { \
         if (!(condition)) { \
             std::cerr << "TGUI assertion: " << msg << "\n"; \
@@ -219,7 +233,7 @@
     #define TGUI_ASSERT(condition, msg)
 #endif
 
-// Using [=] gives a warning in C++20, but using [=,this] may not compile with older C++ versions
+// Using [=] gives a warning in c++20, but using [=,this] may not compile with older c++ versions
 #if __cplusplus > 201703L
     #define TGUI_LAMBDA_CAPTURE_EQ_THIS [=,this]
 #else

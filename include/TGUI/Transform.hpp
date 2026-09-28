@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -30,11 +30,13 @@
 #include <TGUI/Config.hpp>
 #include <TGUI/Rect.hpp>
 
-#include <array>
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <array>
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Defines a transform matrix
@@ -105,11 +107,7 @@ namespace tgui
         ///
         /// @return Transformed point
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        TGUI_NODISCARD Vector2f transformPoint(const Vector2f& point) const
-        {
-            return {m_matrix[0] * point.x + m_matrix[4] * point.y + m_matrix[12],
-                    m_matrix[1] * point.x + m_matrix[5] * point.y + m_matrix[13]};
-        }
+        TGUI_NODISCARD Vector2f transformPoint(const Vector2f& point) const;
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Transform a rectangle

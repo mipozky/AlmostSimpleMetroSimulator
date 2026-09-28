@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -30,9 +30,11 @@
 #include <TGUI/Texture.hpp>
 #include <TGUI/Outline.hpp>
 
-#include <unordered_map>
-#include <memory>
-#include <set>
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <unordered_map>
+    #include <memory>
+    #include <set>
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -64,7 +66,7 @@ namespace dev
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /// Layout alignment for automatically setting the position and (part of) the size of a component
-    enum class AlignLayout : std::uint8_t
+    enum class AlignLayout
     {
         None,       //!< Position and size need to be manually set. This is the default.
         Top,        //!< Places the component on on the top and sets its width to the area between Leftmost and Rightmost aligned components. Height needs to be manually set.
@@ -79,7 +81,7 @@ namespace dev
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /// Position alignment of a component within its parent
-    enum class PositionAlignment : std::uint8_t
+    enum class PositionAlignment
     {
         None,        //!< Place the component at the manually set position. This is the default.
         TopLeft,     //!< Place the component in the upper left corner of its parent
@@ -154,7 +156,7 @@ namespace dev
 
             const std::uint64_t baseIndex = m_propertyData & 0xFFFFFFFFFFFF0000;
             const std::uint64_t oldBaseIndex = other.m_propertyData & 0xFFFFFFFFFFFF0000;
-            const auto oldStoredStates = static_cast<std::uint16_t>(other.m_propertyData & 0xFFFF);
+            const std::uint16_t oldStoredStates = static_cast<std::uint16_t>(other.m_propertyData & 0xFFFF);
 
             std::uint16_t total = 0;
             std::uint8_t bitIndex = 0;
@@ -250,7 +252,7 @@ namespace dev
         TGUI_NODISCARD const ValueType& getValue(ComponentState state = ComponentState::Normal) const
         {
             const std::uint64_t baseIndex = m_propertyData & 0xFFFFFFFFFFFF0000;
-            const auto storedStates = static_cast<std::uint16_t>(m_propertyData & 0xFFFF);
+            const std::uint16_t storedStates = static_cast<std::uint16_t>(m_propertyData & 0xFFFF);
 
             // If we don't have a value for any state then we can just return the default value
             if (storedStates == 0)
@@ -304,11 +306,12 @@ namespace dev
                 // is e.g. a value for both Normal and Disabled state and the widget is enabled.
                 return m_globalValues.at(baseIndex + static_cast<std::uint8_t>(ComponentState::Normal));
             }
-
-            // We don't have any relevant values, so return the default value. It is possible to
-            // pass here while storedStates > 0 when there is e.g. only a value for the Disabled
-            // state and the widget is enabled.
-            return m_defaultValue;
+            else
+            {
+                // We don't have any relevant values, so return the default value. It is possible to pass here while storedStates > 0 when
+                // there is e.g. only a value for the Disabled state and the widget is enabled.
+                return m_defaultValue;
+            }
         }
 
         TGUI_NODISCARD std::uint64_t connectCallback(std::function<void()> func)
@@ -318,7 +321,7 @@ namespace dev
 
         void disconnectCallback(std::uint64_t id)
         {
-            MessageBroker::unsubscribe(id);
+            return MessageBroker::unsubscribe(id);
         }
 
     private:
@@ -326,7 +329,7 @@ namespace dev
         void unsetValueImpl()
         {
             const std::uint64_t baseIndex = m_propertyData & 0xFFFFFFFFFFFF0000;
-            const auto storedStates = static_cast<std::uint16_t>(m_propertyData & 0xFFFF);
+            const std::uint16_t storedStates = static_cast<std::uint16_t>(m_propertyData & 0xFFFF);
 
             std::uint16_t total = 0;
             std::uint8_t bitIndex = 0;
@@ -424,7 +427,8 @@ namespace dev
         TGUI_NODISCARD virtual std::shared_ptr<Component> clone() const = 0;
 
     protected:
-        friend void swap(Component& first, Component& second) noexcept;
+
+        friend void swap(Component& first, Component& second);
 
     protected:
 
@@ -459,7 +463,7 @@ namespace dev
 
         TGUI_NODISCARD std::shared_ptr<Component> clone() const override;
 
-        friend void swap(GroupComponent& first, GroupComponent& second) noexcept;
+        friend void swap(GroupComponent& first, GroupComponent& second);
 
     protected:
 
@@ -476,7 +480,7 @@ namespace dev
     {
     public:
 
-        explicit BackgroundComponent(StylePropertyBackground* backgroundStyle);
+        BackgroundComponent(StylePropertyBackground* backgroundStyle);
 
         ~BackgroundComponent() override;
 
@@ -538,7 +542,7 @@ namespace dev
     {
     public:
 
-        explicit TextComponent(StylePropertyText* textStyle);
+        TextComponent(StylePropertyText* textStyle);
 
         ~TextComponent() override;
 
@@ -596,7 +600,7 @@ namespace dev
     {
     public:
 
-        explicit ImageComponent(StyleProperty<Texture>* textureStyle);
+        ImageComponent(StyleProperty<Texture>* textureStyle);
 
         ~ImageComponent() override;
 
@@ -633,38 +637,34 @@ namespace dev
         {
             if (active)
                 return ComponentState::DisabledActive;
-
-            return ComponentState::Disabled;
+            else
+                return ComponentState::Disabled;
         }
-
-        if (focused)
+        else if (focused)
         {
             if (active)
             {
                 if (hover)
                     return ComponentState::FocusedActiveHover;
-
-                return ComponentState::FocusedActive;
+                else
+                    return ComponentState::FocusedActive;
             }
-
-            if (hover)
+            else if (hover)
                 return ComponentState::FocusedHover;
-
-            return ComponentState::Focused;
+            else
+                return ComponentState::Focused;
         }
-
-        if (active)
+        else if (active)
         {
             if (hover)
                 return ComponentState::ActiveHover;
-
-            return ComponentState::Active;
+            else
+                return ComponentState::Active;
         }
-
-        if (hover)
+        else if (hover)
             return ComponentState::Hover;
-
-        return ComponentState::Normal;
+        else
+            return ComponentState::Normal;
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

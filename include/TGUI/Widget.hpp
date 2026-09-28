@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -34,7 +34,6 @@
 #include <TGUI/String.hpp>
 #include <TGUI/Vector2.hpp>
 #include <TGUI/Duration.hpp>
-#include <TGUI/CopiedPtr.hpp>
 #include <TGUI/Cursor.hpp>
 #include <TGUI/Event.hpp>
 #include <TGUI/Any.hpp>
@@ -45,21 +44,21 @@
 #include <TGUI/Loading/Deserializer.hpp>
 #include <TGUI/Renderers/WidgetRenderer.hpp>
 
-#include <unordered_set>
+#if TGUI_USE_SYSTEM_AURORA
+    #include <Aurora/SmartPtr/CopiedPtr.hpp>
+    #include <Aurora/Tools/Downcast.hpp>
+#else
+    #include <TGUI/extlibs/Aurora/SmartPtr/CopiedPtr.hpp>
+    #include <TGUI/extlibs/Aurora/Tools/Downcast.hpp>
+#endif
+
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <unordered_set>
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// We used to rely on Aurora (https://bromeon.ch/libraries/aurora/index.html) for some functionality.
-// For backwards compatibility the replacement functions are still placed in the aurora namespace.
-// TGUI_NEXT: Remove this namespace and the include files in the extlibs folder.
-namespace aurora
-{
-    using tgui::CopiedPtr;
-    using tgui::makeCopied;
-    using tgui::downcast;
-}
-
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     class BackendGui;
     class Container;
@@ -75,7 +74,7 @@ namespace tgui
     }
 }
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief The parent class for every widget
@@ -1291,7 +1290,7 @@ namespace tgui
         Widget::Ptr m_toolTip = nullptr;
 
         // Renderer of the widget
-        CopiedPtr<WidgetRenderer> m_renderer = nullptr;
+        aurora::CopiedPtr<WidgetRenderer> m_renderer = nullptr;
 
         // Show animations
         std::vector<std::unique_ptr<priv::Animation>> m_showAnimations;

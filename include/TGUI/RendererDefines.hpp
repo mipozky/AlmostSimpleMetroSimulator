@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -35,7 +35,8 @@
         const auto it = m_data->propertyValuePairs.find(tgui::String(#NAME)); \
         if (it != m_data->propertyValuePairs.end()) \
             return it->second.getOutline(); \
-        return {}; \
+        else \
+            return {}; \
     } \
     void CLASS::set##NAME(const tgui::Outline& outline) \
     { \
@@ -50,7 +51,8 @@
         const auto it = m_data->propertyValuePairs.find(tgui::String(#NAME)); \
         if (it != m_data->propertyValuePairs.end()) \
             return it->second.getColor(); \
-        return DEFAULT; \
+        else \
+            return DEFAULT; \
     } \
     void CLASS::set##NAME(tgui::Color color) \
     { \
@@ -65,7 +67,8 @@
         const auto it = m_data->propertyValuePairs.find(tgui::String(#NAME)); \
         if (it != m_data->propertyValuePairs.end()) \
             return it->second.getTextStyle(); \
-        return DEFAULT; \
+        else \
+            return DEFAULT; \
     } \
     void CLASS::set##NAME(tgui::TextStyles style) \
     { \
@@ -80,7 +83,8 @@
         const auto it = m_data->propertyValuePairs.find(tgui::String(#NAME)); \
         if (it != m_data->propertyValuePairs.end()) \
             return it->second.getNumber(); \
-        return DEFAULT; \
+        else \
+            return DEFAULT; \
     }
 
 #define TGUI_RENDERER_PROPERTY_NUMBER(CLASS, NAME, DEFAULT) \
@@ -98,7 +102,8 @@
         const auto it = m_data->propertyValuePairs.find(tgui::String(#NAME)); \
         if (it != m_data->propertyValuePairs.end()) \
             return it->second.getBool(); \
-        return DEFAULT; \
+        else \
+            return DEFAULT; \
     }
 
 #define TGUI_RENDERER_PROPERTY_BOOL(CLASS, NAME, DEFAULT) \
@@ -116,8 +121,11 @@
         const auto it = m_data->propertyValuePairs.find(tgui::String(#NAME)); \
         if (it != m_data->propertyValuePairs.end()) \
             return it->second.getTexture(); \
-        m_data->propertyValuePairs[tgui::String(#NAME)] = {tgui::Texture{}}; \
-        return m_data->propertyValuePairs[tgui::String(#NAME)].getTexture(); \
+        else \
+        { \
+            m_data->propertyValuePairs[tgui::String(#NAME)] = {tgui::Texture{}}; \
+            return m_data->propertyValuePairs[tgui::String(#NAME)].getTexture(); \
+        } \
     } \
     void CLASS::set##NAME(const tgui::Texture& texture) \
     { \
@@ -132,9 +140,12 @@
         const auto it = m_data->propertyValuePairs.find(tgui::String(#NAME)); \
         if (it != m_data->propertyValuePairs.end()) \
             return it->second.getRenderer(); \
-        const auto& renderer = tgui::Theme::getDefault()->getRendererNoThrow(RENDERER); \
-        m_data->propertyValuePairs[tgui::String(#NAME)] = {renderer ? renderer : (DEFAULT)}; \
-        return renderer; \
+        else \
+        { \
+            const auto& renderer = tgui::Theme::getDefault()->getRendererNoThrow(RENDERER); \
+            m_data->propertyValuePairs[tgui::String(#NAME)] = {renderer ? renderer : (DEFAULT)}; \
+            return renderer; \
+        } \
     } \
     void CLASS::set##NAME(std::shared_ptr<tgui::RendererData> renderer) \
     { \
@@ -145,7 +156,7 @@
     }
 
 #define TGUI_RENDERER_PROPERTY_RENDERER(CLASS, NAME, RENDERER) \
-    TGUI_RENDERER_PROPERTY_RENDERER_WITH_DEFAULT(CLASS, NAME, RENDERER, tgui::RendererData::create())
+    TGUI_RENDERER_PROPERTY_RENDERER_WITH_DEFAULT(CLASS, NAME, RENDERER, tgui::RendererData::create()) \
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

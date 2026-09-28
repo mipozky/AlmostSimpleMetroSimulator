@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -25,15 +25,20 @@
 #ifndef TGUI_BACKEND_FONT_RAYLIB_HPP
 #define TGUI_BACKEND_FONT_RAYLIB_HPP
 
-#include <TGUI/Backend/Font/BackendFont.hpp>
+#include <TGUI/Config.hpp>
+#if !TGUI_BUILD_AS_CXX_MODULE
+    #include <TGUI/Backend/Font/BackendFont.hpp>
 
-#include <unordered_map>
+    struct GlyphInfo;
+#endif
 
-struct GlyphInfo;
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <unordered_map>
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Font implementations that uses Raylib to load glyphs
@@ -124,7 +129,7 @@ namespace tgui
         TGUI_NODISCARD float getAscent(unsigned int characterSize) override;
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// @brief Returns the maximum height of a glyph below the baseline as a negative value
+        /// @brief Returns the maximum height of a glyph below the baseline
         ///
         /// @param characterSize  Size of the characters
         ///

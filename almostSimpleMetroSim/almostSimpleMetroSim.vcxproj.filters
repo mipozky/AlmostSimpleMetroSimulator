@@ -24,9 +24,6 @@
     <ClCompile Include="tunnel.hpp">
       <Filter>Header Files</Filter>
     </ClCompile>
-    <ClCompile Include="FileName.cpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="703_E.hpp">
@@ -38,9 +35,6 @@
     <ClInclude Include="MGraphics.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="rounded_rectangle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="mevent.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -48,6 +42,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="console.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rounded_rectangle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

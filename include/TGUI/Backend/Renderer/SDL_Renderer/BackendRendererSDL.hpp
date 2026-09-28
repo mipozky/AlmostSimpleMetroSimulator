@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -28,15 +28,22 @@
 #include <TGUI/Backend/Renderer/SDL_Renderer/BackendTextureSDL.hpp>
 #include <TGUI/Backend/Renderer/SDL_Renderer/BackendRenderTargetSDL.hpp>
 #include <TGUI/Backend/Renderer/SDL_Renderer/CanvasSDL.hpp>
-#include <TGUI/Backend/Renderer/BackendRenderer.hpp>
 
-#include <memory>
+#if !TGUI_BUILD_AS_CXX_MODULE
+    #include <TGUI/Backend/Renderer/BackendRenderer.hpp>
+#endif
+
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <memory>
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if !TGUI_BUILD_AS_CXX_MODULE
 struct SDL_Renderer;
+#endif
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Backend renderer that uses SDL_Renderer
@@ -68,21 +75,11 @@ namespace tgui
         TGUI_NODISCARD unsigned int getMaximumTextureSize() override;
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// @brief Returns a pointer to the SDL_Renderer object stored in this backend renderer
+        /// @brief Returns a pointer to the SDL_Renderer object that was used to create this backend renderer
         ///
-        /// @return SDL_Renderer pointer that was passed to the constructor of this object or in a call to setActiveRenderer
+        /// @return SDL_Renderer pointer that was passed to the constructor of this object
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         TGUI_NODISCARD SDL_Renderer* getInternalRenderer() const;
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// @brief Changes the SDL_Renderer object that is used to create textures
-        ///
-        /// This function is only needed when working with multiple windows. In such case each window has it's own SDL_Renderer
-        /// and the correct one needs to be selected when textures are created.
-        ///
-        /// @since TGUI 1.10
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        void setActiveRenderer(SDL_Renderer* renderer);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     private:

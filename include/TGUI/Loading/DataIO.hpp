@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -29,16 +29,18 @@
 
 #include <TGUI/String.hpp>
 
-#include <sstream>
-#include <memory>
-#include <vector>
-#include <string>
-#include <map>
-#include <cstdio>
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <sstream>
+    #include <memory>
+    #include <vector>
+    #include <string>
+    #include <map>
+    #include <cstdio>
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Parser and emitter for widget files

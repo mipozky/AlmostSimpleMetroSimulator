@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -31,12 +31,14 @@
 #include <TGUI/Cursor.hpp>
 #include <TGUI/TwoFingerScrollDetect.hpp>
 
-#include <chrono>
-#include <stack>
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <chrono>
+    #include <stack>
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Base class for the Gui
@@ -159,7 +161,7 @@ namespace tgui
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Draws all the widgets that were added to the gui
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        virtual void draw(); // TGUI_NEXT: Remove from base class, as some backends require parameters
+        virtual void draw();
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Returns the internal container of the Gui
@@ -477,7 +479,7 @@ namespace tgui
         ///
         /// @throw Exception when file could not be opened for writing
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        void saveWidgetsToFile(const String& filename) const;
+        void saveWidgetsToFile(const String& filename);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Loads the child widgets from a string stream
@@ -663,7 +665,7 @@ namespace tgui
         // The key parameter should be a value from Numpad0 to Numpad9 and the output is the key code that corresponds to the
         // wanted functionality (e.g. for Numpad0 we return the Insert key). Unknown is returned for Numpad5.
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        static Event::KeyboardKey translateKeypadKey(Event::KeyboardKey key);
+        Event::KeyboardKey translateKeypadKey(Event::KeyboardKey key);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public:
@@ -685,7 +687,6 @@ namespace tgui
         bool m_tooltipPossible = false;
         Vector2f m_toolTipRelativePos;
         Vector2i m_lastMousePos;
-        std::uintptr_t m_trackedFingerId = 0;
         TwoFingerScrollDetect m_twoFingerScroll;
 
         Vector2i m_framebufferSize;

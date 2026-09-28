@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -64,7 +64,7 @@
 #else
 #   define STB_IMAGE_STATIC
 #   define STB_IMAGE_IMPLEMENTATION
-#   include <TGUI/extlibs/stb/stb_image.h>
+#   include <stb_image.h>
 #endif
 
 #if defined(__GNUC__)

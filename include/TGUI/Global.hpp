@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -34,18 +34,20 @@
 #include <TGUI/String.hpp>
 #include <TGUI/Filesystem.hpp>
 
-#include <cstdint>
-#include <string>
-#include <memory>
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <cstdint>
+    #include <string>
+    #include <memory>
 
-#ifdef TGUI_DEBUG
-    #include <iostream>
+    #ifdef TGUI_DEBUG
+        #include <iostream>
+    #endif
 #endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Namespace that contains all TGUI functions and classes
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Create a unique_ptr containing an uninitialized array
@@ -62,7 +64,7 @@ namespace tgui
 #endif
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Clamps a value between two boundries. This function exists because std::clamp was only added with C++17
+    /// @brief Clamps a value between two boundries. This function exists because std::clamp was only added with c++17
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     template <typename T>
     TGUI_NODISCARD constexpr const T& clamp(const T& v, const T& lo, const T& hi)
@@ -158,36 +160,6 @@ namespace tgui
     /// @return True on success, false if opening or writing to the file failed
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     TGUI_API bool writeFile(const String& filename, CharStringView textToWrite);
-
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Cast from a reference of a base class to a reference of a derived class
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    template <typename To, typename From>
-    To downcast(From& base)
-    {
-        TGUI_ASSERT(dynamic_cast<std::remove_reference_t<To>*>(&base), "Downcasting to wrong type");
-        return static_cast<To>(base);
-    }
-
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Cast from a pointer of a base class to a pointer of a derived class
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    template <typename To, typename From>
-    To downcast(From* base)
-    {
-        TGUI_ASSERT(dynamic_cast<To>(base), "Downcasting to wrong type");
-        return static_cast<To>(base);
-    }
-
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Cast from a shared pointer of a base class to a pointer of a derived class
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    template <typename To, typename From>
-    std::shared_ptr<To> downcast(std::shared_ptr<From> base)
-    {
-        TGUI_ASSERT(std::dynamic_pointer_cast<To>(base), "Downcasting to wrong type");
-        return std::static_pointer_cast<To>(base);
-    }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }

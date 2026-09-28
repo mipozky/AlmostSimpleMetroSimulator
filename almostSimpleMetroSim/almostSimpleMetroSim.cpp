@@ -8,20 +8,19 @@
 #include <optional>
 #include <vector>
 #include <string>
-#include <entt/entt.hpp>
-#include <TGUI/TGUI.hpp>
-#include <TGUI/Backend/SFML-Graphics.hpp>
+#include <TGui/TGui.hpp>
+#include <TGui/Backend/SFML-Graphics.hpp>
+#include "console.hpp"
 #define METER_TO_PX 71.1f
+#include "includes.h"
 #include "AssetManager.hpp"
 #include "MGraphics.hpp"
 #include "mevent.hpp"
 #include "tunnel.hpp"
 #include "train_base.hpp"
 #include "703_E.hpp"
-#include "includes.h"
 bool showfps = false;
 bool simQuality = false;
-#include "console.hpp"
 #include <SFML/OpenGL.hpp>
 #include <consoleapi3.h>
 #include <windows.h>
@@ -33,12 +32,12 @@ using namespace sf;
 
 float simSpeed = 1.f;
 
-void failureDraw(Console&console, tgui::Gui& gui, RenderWindow*window) {
+void failureDraw(Console& console, tgui::Gui& gui, RenderWindow* window) {
     window->setActive(true);
-	console.log("Fail draw enabled");
+    console.log("Fail draw enabled");
     HWND hwnd = window->getNativeHandle();
     while (window->isOpen()) {
-		console.on();
+        console.on();
         if (GetAsyncKeyState(VK_LWIN) & 0x8000 || GetAsyncKeyState(VK_RWIN) & 0x8000)
             ShowWindow(hwnd, SW_MINIMIZE);
         while (const auto event = window->pollEvent()) {
@@ -66,64 +65,188 @@ private:
     mutex mutex_;
     vector<MEvent> eventLog;
 };
+
+Ent_Train& findActiveHead(vector<unique_ptr<Ent_Train>>& cars) {
+    for (auto& t : cars) {
+        if (t->isHead == true) return *t;
+    }
+    return *cars[0];
+}
+
 struct Consist {
-    vector<entt::entity> order;
+    vector<unique_ptr<Ent_Train>> cars;
 
-    entt::entity head() const { return order.front(); }
-
-    void updateWires(entt::registry& reg) {
-        train_base_systems::updateWires(reg, order);
+    void updateWires() {
+        array<float, 32> total{};
+        for (auto& t : cars) {
+            auto wires = t->sendWires();
+            for (int i = 0; i < 32; i++)
+                total[i] += wires[i];
+        }
+        for (auto& t : cars) {
+            for (int i = 0; i < 32; i++)
+                t->setWires(total);
+        }
     }
-    void writeWagonCount(entt::registry& reg) {
-        int count = (int)order.size();
-        for (entt::entity e : order) {
-            reg.get<train_base::WagonCount>(e).count = count;
+    void writeWagonCount() {
+        int count = cars.size();
+        for (size_t i = 0; i < cars.size(); ++i) {
+            cars[i]->wagonCount = count;
+            cars[i]->wagonId = i;
         }
-	}
-    void syncSpeed(entt::registry& reg) {
-		float speed = reg.get<train_base::Movement>(head()).speed;
-        for (entt::entity e : order) {
-            auto& mv = reg.get<train_base::Movement>(e);
-            mv.speed = speed;
+    }
+ 
+    double equalizeCoupledPressure(float dT, double& selfP, double* otherP,
+        bool valveOpen, float rate, float closeRate)
+    {
+        if (!valveOpen) return 0.0;
+
+        double P2 = otherP ? *otherP : 0.0;
+        if (!otherP) rate = (closeRate > 0.f) ? closeRate : rate;
+
+        double dPdT = rate * (P2 - selfP);
+        double dP = dPdT * dT;
+        double P0 = (P2 + selfP) / 2.0;
+
+        if (dP > 0) {
+            selfP = min(P0, selfP + dP);
+            if (otherP) *otherP = max(P0, *otherP - dP);
         }
-	}
-    void update(entt::registry& reg) {
-		updateWires(reg);
-		syncSpeed(reg);
-        writeWagonCount(reg);
-	}
+        else {
+            selfP = max(P0, selfP + dP);
+            if (otherP) *otherP = min(P0, *otherP - dP);
+        }
+        return dP;
+    }
 
-    void addWagon(entt::registry& reg, entt::entity wagon) {
-        order.push_back(wagon);
-	}
+    void getCoupledNeighbors(size_t i, Ent_Train** outFront, Ent_Train** outRear) {
+        Ent_Train* self = cars[i].get();
+        Ent_Train* towardsHead = (i > 0) ? cars[i - 1].get() : nullptr;
+        Ent_Train* towardsTail = (i + 1 < cars.size()) ? cars[i + 1].get() : nullptr;
 
-    void createConsist(entt::registry& reg, int wagonCount, RenderWindow* window, AssetManager& tm) {
-        if (wagonCount <= 0) return;
-        entt::entity head = makeWagonE(reg, window, tm, true);
-        addWagon(reg, head);
+        if (self->reversed) {
+            *outFront = towardsTail;
+            *outRear = towardsHead;
+        }
+        else {
+            *outFront = towardsHead;
+            *outRear = towardsTail;
+        }
+    }
+
+    void equalizeTrainLinePressure(float dT) {
+        const float rate = 100.f;
+        const float closeRate = 0.08f;
+
+        for (size_t i = 0; i < cars.size(); i++) {
+            Ent_Train* self = cars[i].get();
+            Ent_Train* front;
+            Ent_Train* rear;
+            getCoupledNeighbors(i, &front, &rear);
+
+            bool frontOpen = self->trainValveFront && front != nullptr;
+            bool rearOpen = self->trainValveRear && rear != nullptr;
+
+            double frontP = frontOpen ? front->TrainLine : 0.0;
+            double rearP = rearOpen ? rear->TrainLine : 0.0;
+
+            equalizeCoupledPressure(dT, self->TrainLine,
+                frontOpen ? &frontP : nullptr, self->trainValveFront, rate, closeRate);
+            if (frontOpen) front->TrainLine = frontP;
+
+            equalizeCoupledPressure(dT, self->TrainLine,
+                rearOpen ? &rearP : nullptr, self->trainValveRear, rate, closeRate);
+            if (rearOpen) rear->TrainLine = rearP;
+
+            self->TrainLineOpen = !frontOpen || !rearOpen;
+        }
+    }
+
+    void equalizeBrakeLinePressure(float dT) {
+        const float rate = 100.f;
+        const float closeRate = 0.08f;
+
+        for (size_t i = 0; i < cars.size(); i++) {
+            Ent_Train* self = cars[i].get();
+            Ent_Train* front;
+            Ent_Train* rear;
+            getCoupledNeighbors(i, &front, &rear);
+
+            bool frontOpen = self->brakeValveFront && front != nullptr;
+            bool rearOpen = self->brakeValveRear && rear != nullptr;
+
+            double frontP = frontOpen ? front->BrakeLine : 0.0;
+            double rearP = rearOpen ? rear->BrakeLine : 0.0;
+
+            equalizeCoupledPressure(dT, self->BrakeLine,
+                frontOpen ? &frontP : nullptr, self->brakeValveFront, rate, closeRate);
+            if (frontOpen) front->BrakeLine = frontP;
+
+            equalizeCoupledPressure(dT, self->BrakeLine,
+                rearOpen ? &rearP : nullptr, self->brakeValveRear, rate, closeRate);
+            if (rearOpen) rear->BrakeLine = rearP;
+        }
+    }
+
+    void updateMovement(float dt) {
+        float totalMass = 0.f;
+        float totalForce = 0.f;
+        for (auto& t : cars) {
+            totalMass += t->mass;
+            totalForce += t->netForce;
+        }
+        if (totalMass <= 0.f) return;
+
+        float sharedAccel = totalForce / totalMass;
+        float newSpeed = findActiveHead(cars).speed + sharedAccel * dt;
+
+        for (auto& t : cars) {
+            t->accel = sharedAccel;
+            t->speed = newSpeed;
+        }
+    }
+
+    void update(float dT) {
+        for (auto& t : cars) {
+            t->main750v = 750;
+        }
+        updateWires();
+        updateMovement(dT); 
+        writeWagonCount();
+        equalizeTrainLinePressure(dT);
+        equalizeBrakeLinePressure(dT);
+    }
+
+
+    void addWagon(unique_ptr<Ent_Train> wagon, int pos = INT_MAX) {
+        if (cars.empty() or pos > cars.size()) cars.push_back(move(wagon));
+        else cars.insert(cars.begin() + pos, move(wagon));
+    }
+    template <typename TrainType>
+    void createConsist(int wagonCount, RenderWindow* window, AssetManager& tm) {
+        addWagon(make_unique<TrainType>(0, window, tm, true));
         for (int i = 1; i < wagonCount; i++) {
-            entt::entity wagon = makeWagonE(reg, window, tm);
-			addWagon(reg, wagon);
-		}
+            addWagon(make_unique<TrainType>(i, window, tm));
+        }
     }
-}; 
+};
 
 void renderingThread(RenderWindow* window,
-    entt::registry& reg,
+    Consist& consist,
     tunnelSet& tunnels,
     atomic<bool>& running,
     tgui::Gui& gui,
     Console& console,
-	atomic<bool>& renderFailed
+    atomic<bool>& renderFailed
 )
 {
-	Font font;
-	font.openFromFile("fonts\\consolas.ttf");
+    Font font;
+    font.openFromFile("fonts\\consolas.ttf");
     Text fpsCounter{ font };
-	Text simQualityCounter{ font };
-	fpsCounter.setCharacterSize(24);
-	fpsCounter.setFillColor(sf::Color::White);
-	fpsCounter.setPosition(Vector2f(10.f, 10.f));
+    Text simQualityCounter{ font };
+    fpsCounter.setCharacterSize(24);
+    fpsCounter.setFillColor(sf::Color::White);
+    fpsCounter.setPosition(Vector2f(10.f, 10.f));
     simQualityCounter.setCharacterSize(24);
     simQualityCounter.setFillColor(sf::Color::White);
     simQualityCounter.setPosition(Vector2f(10.f, 40.f));
@@ -141,8 +264,12 @@ void renderingThread(RenderWindow* window,
             auto frameStart = chrono::steady_clock::now();
             window->clear();
             tunnels.draw();
-            train_base_systems::drawAll(reg, *window);
-            train_base_systems::drawUI(reg, *window);
+            for (auto& t : consist.cars) {
+                t->draw();
+            }
+            for (auto& t : consist.cars) {
+                t->drawui();
+            }
 
             if (GetAsyncKeyState(VK_LWIN) & 0x8000 || GetAsyncKeyState(VK_RWIN) & 0x8000)
                 ShowWindow(hwnd, SW_MINIMIZE);
@@ -155,19 +282,20 @@ void renderingThread(RenderWindow* window,
                 lastFpsTime = frameStart;
             }
             if (showfps) {
-               fpsCounter.setString("FPS: " + to_string((int)fps));
-                    window->draw(fpsCounter);
+                fpsCounter.setString("FPS: " + to_string((int)fps));
+                window->draw(fpsCounter);
             }
-            if(simQuality) {
+            if (simQuality) {
                 simQualityCounter.setString("SQ: " + to_string(simSpeed));
                 window->draw(simQualityCounter);
-			}
-            
+            }
+
 
             window->display();
             ++counter;
         }
     }
+
     catch (const exception& e) {
         cerr << "Error when rendering: " << e.what() << "\n";
         window->setActive(false);
@@ -175,7 +303,7 @@ void renderingThread(RenderWindow* window,
     }
 
 }
-void simulator(entt::registry& reg,
+void simulator(
     Consist& consist,
     tunnelSet& tunnels,
     MEventBus& bus,
@@ -201,20 +329,25 @@ void simulator(entt::registry& reg,
             bus.drainTo(inputEvents);
 
             {
-                auto view = reg.view<train_base::EventBuffer>();
+                //cant remember this bullshit, remake from scratch?
+
+                /*auto view = reg.view<train_base::EventBuffer>();
                 for (auto e : view) {
                     auto& buffer = view.get<train_base::EventBuffer>(e);
                     for (auto& m : buffer.events) {
                         inputEvents.push_back(m);
                     }
                     buffer.events.clear();
-                }
+                }*/
             }
-			consist.update(reg);
+            consist.update(dt);
 
-            train_e_systems::simAllWagonsE(reg, inputEvents, (double)dt);
+            for (auto& t : consist.cars) {
+                t->sim(&inputEvents, (double)dt);
+            }
+
             simSpeed = dt;
-            tunnels.simulate((float)dt * train_base_systems::readSpeed(reg, consist.head()) * METER_TO_PX);
+            tunnels.simulate((float)dt * findActiveHead(consist.cars).speed * METER_TO_PX);
 
             auto target = currentTime + chrono::milliseconds(10);
             while (chrono::steady_clock::now() < target) {
@@ -229,16 +362,12 @@ void simulator(entt::registry& reg,
 }
 int main()
 {
+    //_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
     ShowWindow(GetConsoleWindow(), 0);
     sf::ContextSettings settings;
     settings.antiAliasingLevel = 16;
     sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
-#ifdef KOSTIL
-    sf::RenderWindow window(desktop, "ASMS", sf::State::Windowed, settings);
-	window.setPosition({ 0, 0 });
-#else
-	sf::RenderWindow window(desktop, "ASMS", sf::State::Fullscreen, settings);
-#endif
+    sf::RenderWindow window(desktop, "ASMS", sf::State::Fullscreen, settings);
     tgui::Gui gui{ window };
     Console console{ gui };
 
@@ -247,42 +376,40 @@ int main()
     ConsoleBuf clogBuf(console, std::clog);
 
     try {
-        
+
+        //setupDebugBox(gui);
+
         AssetManager tm;
         tunnelSet tunnels(&window, tm.get<Texture>("textures\\tunnels\\tunel_sq_t1.png"), { 0, 345 });
-        entt::registry reg;
         Consist consist;
 
-		consist.createConsist(reg, 2, &window, tm);
-        
-        train_base_systems::applyScale(reg);
+        consist.createConsist<Ent_Train_E>(2, &window, tm);
 
-        
-        for (int i = 0; i < (int)consist.order.size(); i++) {
-            entt::entity e = consist.order[i];
-            auto& spl = reg.get<train_base::SpriteList>(e);
-            auto& rp = reg.get<train_base::RelPos>(e);
 
-            
-            const Sprite& body = spl.sprites[train_e::SpriteSlot::Body].sprite;
-            float posy = window.getSize().y / 2.f - body.getGlobalBounds().size.y / 2.f;
-            float posx = i * body.getGlobalBounds().size.x - 130.f * i;
-            rp.pos = { posx, posy };
-            spl.updatePositions(rp.pos);
+        for (auto& t : consist.cars) {
+            t->setScale();
+        }
+        for (int i = 0; i < consist.cars.size(); i++) {
+            sf::Sprite sprite = consist.cars[i]->getSprite(0);
+            float posy = (window.getSize().y / 2 - sprite.getGlobalBounds().size.y / 2);
+            float posx = (float)i * sprite.getGlobalBounds().size.x - 130 * i;
+            Vector2f pos(posx, posy);
+            consist.cars[i]->setPos(pos);
+            consist.cars[i]->updatePos();
         }
 
         MEventBus bus;
         atomic<bool> running{ true };
-		atomic<bool> renderFailed{ false };
+        atomic<bool> renderFailed{ false };
 
         window.setActive(false);
-        jthread renderThread(renderingThread, &window, ref(reg), ref(tunnels), ref(running), ref(gui), ref(console), ref(renderFailed));
-        jthread simThread([&]() { simulator(reg, consist, tunnels, bus, running, gui, console); });
+        jthread renderThread(renderingThread, &window, ref(consist), ref(tunnels), ref(running), ref(gui), ref(console), ref(renderFailed));
+        jthread simThread([&]() { simulator(consist, tunnels, bus, running, gui, console); });
 
-        
+
         while (window.isOpen()) {
             if (renderFailed.load()) {
-                failureDraw( console, gui,&window);
+                failureDraw(console, gui, &window);
             }
             while (const optional ev = window.pollEvent()) {
                 gui.handleEvent(*ev);
@@ -295,10 +422,10 @@ int main()
                 else if (ev->is<Event::MouseButtonPressed>() ||
                     ev->is<Event::MouseButtonReleased>())
                 {
-                    train_base_systems::checkUIEvents(reg, *ev);
+                    for (auto& t : consist.cars) t->ui.checkEvents(*ev);
                 }
                 else if (ev->is<Event::MouseMoved>()) {
-                    train_base_systems::checkUIEvents(reg, *ev);
+                    for (auto& t : consist.cars) t->ui.checkEvents(*ev);
                 }
                 else if (const auto* kp = ev->getIf<Event::KeyPressed>()) {
                     if (kp->code == sf::Keyboard::Key::Grave)console.toggle();
@@ -314,9 +441,9 @@ int main()
                         bus.emit(m);
                     }
                 }
-                
+
             }
-            this_thread::sleep_for(chrono::nanoseconds(100));
+            this_thread::sleep_for(chrono::milliseconds(10));
         }
 
         running.store(false);
@@ -327,7 +454,7 @@ int main()
     catch (const exception& e) {
         cerr << "Error on startup/event gather: " << e.what() << "\n";
         console.on();
-		failureDraw(console, gui, &window);
+        failureDraw(console, gui, &window);
         return 1;
     }
 }

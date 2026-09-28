@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -25,14 +25,22 @@
 #ifndef TGUI_BACKEND_RENDER_TARGET_SFML_HPP
 #define TGUI_BACKEND_RENDER_TARGET_SFML_HPP
 
-#include <TGUI/Backend/Renderer/BackendRenderTarget.hpp>
+#include <TGUI/Config.hpp>
+#if !TGUI_BUILD_AS_CXX_MODULE
+    #include <TGUI/Backend/Renderer/BackendRenderTarget.hpp>
 
+    namespace sf
+    {
+        class RenderTarget;
+    }
+#endif
+
+#include <SFML/Graphics/View.hpp>
 #include <SFML/Graphics/RenderStates.hpp>
-#include <SFML/Graphics/RenderTarget.hpp>
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Render target that uses SFML to draw the gui
@@ -46,7 +54,7 @@ namespace tgui
         ///
         /// @param target  The SFML render target (typically sf::RenderWindow) on which the gui should be drawn
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        explicit BackendRenderTargetSFML(sf::RenderTarget& target);
+        BackendRenderTargetSFML(sf::RenderTarget& target);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Returns the SFML render target on which the gui is being drawn
@@ -110,7 +118,7 @@ namespace tgui
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Converts tgui::RenderStates to sf::RenderStates
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        TGUI_NODISCARD static sf::RenderStates convertRenderStates(const RenderStates& states, const std::shared_ptr<BackendTexture>& texture);
+        TGUI_NODISCARD sf::RenderStates convertRenderStates(const RenderStates& states, const std::shared_ptr<BackendTexture>& texture);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     protected:

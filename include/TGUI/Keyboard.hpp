@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -44,10 +44,6 @@ namespace tgui
 #ifndef TGUI_REMOVE_DEPRECATED_CODE
         TGUI_DEPRECATED("Use BackendGui::startTextInput instead") inline void openVirtualKeyboard(const Widget* requestingWidget, FloatRect inputRect)
         {
-            TGUI_ASSERT(requestingWidget != nullptr, "requestingWidget must not be nullptr");
-            if (!requestingWidget)
-                return;
-
             const Widget* widget = requestingWidget;
             while (widget)
             {
@@ -78,7 +74,7 @@ namespace tgui
                 {
                     inputRect.setPosition(inputRect.getPosition() + parent->getChildWidgetsOffset());
 
-                    const auto* panel = dynamic_cast<const ScrollablePanel*>(parent);
+                    const ScrollablePanel* panel = dynamic_cast<const ScrollablePanel*>(parent);
                     if (panel)
                         inputRect.setPosition(inputRect.getPosition() - panel->getContentOffset());
                 }
@@ -86,7 +82,7 @@ namespace tgui
                 widget = parent;
             }
 
-            const auto* gui = requestingWidget->getParentGui();
+            const auto gui = requestingWidget->getParentGui();
             if (gui)
             {
                 const Vector2f topLeftPos = gui->mapCoordsToPixel(inputRect.getPosition());
@@ -313,28 +309,6 @@ namespace tgui
                 || ((event.code == Event::KeyboardKey::End) && !event.control && !event.alt && event.system);
 #else
             return (event.code == Event::KeyboardKey::End) && event.control && !event.alt && !event.system;
-#endif
-        }
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        TGUI_NODISCARD inline bool isKeyPressDeleteWordLeft(const Event::KeyEvent& event)
-        {
-#ifdef TGUI_SYSTEM_MACOS
-            return (event.code == Event::KeyboardKey::Backspace) && !event.control && event.alt && !event.system;
-#else
-            return (event.code == Event::KeyboardKey::Backspace) && event.control && !event.alt && !event.system;
-#endif
-        }
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        TGUI_NODISCARD inline bool isKeyPressDeleteWordRight(const Event::KeyEvent& event)
-        {
-#ifdef TGUI_SYSTEM_MACOS
-            return (event.code == Event::KeyboardKey::Delete) && !event.control && event.alt && !event.system;
-#else
-            return (event.code == Event::KeyboardKey::Delete) && event.control && !event.alt && !event.system;
 #endif
         }
 

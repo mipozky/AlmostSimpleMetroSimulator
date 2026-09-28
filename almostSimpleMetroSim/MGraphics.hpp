@@ -16,10 +16,12 @@
 #include <memory>
 #include <cmath>
 #include "rounded_rectangle.h"
+#include <fstream>
+
+
 
 using namespace std;
 using namespace sf;
-
 namespace mg {
     inline sf::Texture emptyTex = []() {
         sf::Image img({ 1, 1 }, sf::Color::Transparent);
@@ -27,6 +29,7 @@ namespace mg {
         tex.loadFromImage(img);
         return tex;
         }();
+    inline sf::Font emptyFont;
     inline void nothing() {
         //cout << "works!\n";
     }
@@ -42,6 +45,7 @@ namespace mg {
         void link(DrawBase* obj) {
             Linked.push_back(obj);
         }
+        int drawOrder = 0;
     protected:
         virtual void drawBase() {}
         virtual Vector2f setPositionBase(Vector2f pos) { return Vector2f(0, 0); }
@@ -119,10 +123,13 @@ namespace mg {
             body.setScale(scale);
             line.setScale(scale);
         }
+
         Vector2f getPosition() override {
             return body.getPosition();
         }
-
+        Vector2f getScale() {
+            return body.getScale();
+        }
         void offsetText(Vector2f offset) {
             line.setPosition(line.getPosition() + offset);
         }
@@ -243,11 +250,11 @@ namespace mg {
     };
     class Lever : public Box {
     public:
-        Lever(Vector2f size, Vector2f pos, Vector2f HandleColsize, Vector2f HandleColpos, Color color, const Font& font, string text,
+        Lever(Vector2f size, Vector2f pos, Vector2f HandleColsize, Vector2f HandleColpos, Color color, string text,
             RenderWindow* window, const Texture& handleSpr, Vector2f handleSpriteOffset,
             const Texture& baseSpr, Vector2f baseSpriteOffset, Vector2f hingeloc, float startAngle_,
             float moveAngle, int positions, bool side, std::function<void()> callback)
-            : Box(size, pos, color, font, text, window, baseSpr, baseSpriteOffset),
+            : Box(size, pos, color, emptyFont, text, window, baseSpr, baseSpriteOffset),
             handle(handleSpr),
             startAngle(startAngle_),
             angle(startAngle_)
@@ -260,7 +267,6 @@ namespace mg {
             handle.setPosition(pos + handleSpriteOffset + hingeloc);
             handle.setRotation(sf::degrees(startAngle));
             localColRect = FloatRect(HandleColpos, HandleColsize);
-
         }
 
         int pos = 0;
@@ -280,30 +286,29 @@ namespace mg {
                 if (tracking) updatePos();
             }
         }
+		bool side = false;
         void updatePos() {
             if (!tracking) return;
 
-
             Vector2f mousePos = Vector2f(Mouse::getPosition(*window));
             Vector2f hingeScreen = handle.getPosition();
+
             float dx = mousePos.x - hingeScreen.x;
+            if (side) dx = -dx;              // <-- дзеркалимо вісь X для правосторонніх важелів
             float dy = mousePos.y - hingeScreen.y;
 
             float rawAngle = atan2(dy, dx);
 
-
+            // далі все як було, без змін
             float startRad = startAngle * (M_PI / 180.f);
             float relative = rawAngle - startRad;
-
 
             float anglePerPosRad = anglePerPos * (M_PI / 180.f);
             float maxAngleRad = posLimit * anglePerPosRad;
 
-
             float midAngle = maxAngleRad / 2.f;
             while (relative > midAngle + M_PI) relative -= 2.f * M_PI;
             while (relative < midAngle - M_PI) relative += 2.f * M_PI;
-
 
             if (maxAngleRad >= 0.f)
                 relative = std::clamp(relative, 0.f, maxAngleRad);
@@ -318,19 +323,26 @@ namespace mg {
                 angle = startAngle + pos * anglePerPos;
                 handle.setRotation(sf::degrees(angle));
                 work();
-            }
+            } 
         }
         void startUpdatePos(int newPos) {
             pos = std::clamp(newPos, 0, posLimit);
             angle = startAngle + pos * anglePerPos;
             handle.setRotation(sf::degrees(angle));
         }
+        bool handleDrawn = 1;
+		void setScale(Vector2f scale) {
+			Box::scale(scale);
+			handle.setScale(scale);
+			localColRect.size = {localColRect.size.x/2, localColRect.size.y/2};
+			localColRect.position = { localColRect.position.x / 2, localColRect.position.y / 2 };
+		} 
     protected:
 
         void drawBase() override {
             window->draw(body);
             window->draw(icon);
-            window->draw(handle);
+            if(handleDrawn)window->draw(handle);
         }
 
 
@@ -418,6 +430,7 @@ namespace mg {
         bool negCheck = false;
         bool ticked = false;
     };
+
     class Gauge : public Box {
     public:
         Gauge(Vector2f size, Vector2f pos, RenderWindow* window,
@@ -426,7 +439,7 @@ namespace mg {
             float minAngle, float maxAngle,
             float physLimitDegrees,
             bool circular = false)
-            : Box(size, pos, sf::Color::Transparent, Font(), "", window, base, spriteOffset),
+            : Box(size, pos, sf::Color::Transparent, emptyFont, "", window, base, spriteOffset),
             minVal(minVal), maxVal(maxVal),
             minAngle(minAngle), maxAngle(maxAngle),
             physLimit(physLimitDegrees), isCircular(circular), needle(needleTex)
@@ -475,3 +488,5 @@ namespace mg {
     };
 
 }
+
+

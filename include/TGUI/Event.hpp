@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -29,7 +29,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -211,16 +211,6 @@ namespace tgui
         };
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// @brief FingerDown/FingerMoved/FingerUp events parameters
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        struct FingerEvent
-        {
-            std::uintptr_t fingerId; //!< Unique id of the finger (must not be 0)
-            int            x;        //!< X position of the mouse pointer, relative to the left of the owner window
-            int            y;        //!< Y position of the mouse pointer, relative to the top of the owner window
-        };
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Resized events parameters
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         struct SizeEvent
@@ -244,9 +234,6 @@ namespace tgui
             MouseMoved,             //!< The mouse cursor moved (data in event.mouseMove)
             MouseEntered,           //!< The mouse cursor entered the content area of the window (no data)
             MouseLeft,              //!< The mouse cursor left the content area of the window (no data)
-            FingerDown,             //!< A finger touched the window (data in event.touch)
-            FingerMoved,            //!< A finger that was touching has moved (data in event.touch)
-            FingerUp,               //!< A finger is no longer touching (data in event.touch)
             Resized,                //!< The window was resized (data in event.size)
             Closed                  //!< The window was closed (no data)
         };
@@ -262,7 +249,6 @@ namespace tgui
             MouseMoveEvent        mouseMove;         //!< Mouse move event parameters (Event::MouseMoved)
             MouseButtonEvent      mouseButton;       //!< Mouse button event parameters (Event::MouseButtonPressed, Event::MouseButtonReleased)
             MouseWheelEvent       mouseWheel;        //!< Mouse wheel event parameters (Event::MouseWheelScrolled)
-            FingerEvent           touch;             //!< Touch event parameters (Event::FingerDown, Event::FingerMoved, Event::FingerUp)
             SizeEvent             size;              //!< Size event parameters (Event::Resized)
         };
     };

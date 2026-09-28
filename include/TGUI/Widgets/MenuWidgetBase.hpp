@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -31,7 +31,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     class OpenMenuPlaceholder;
 
@@ -314,6 +314,7 @@ namespace tgui
         friend class OpenMenuPlaceholder;
     };
 
+
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Widget that is added to a container when the user clicks on the menu bar. This widget will be added in front of
     ///        all other widgets to ensure that the menus from the menu bar are always drawn in front of other widgets.
@@ -330,7 +331,7 @@ namespace tgui
         /// @brief Constructor
         /// @param menuWidget  The widget that owns this menu
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        explicit OpenMenuPlaceholder(MenuWidgetBase* menuWidget);
+        OpenMenuPlaceholder(MenuWidgetBase* menuWidget);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Returns the entire size that the widget is using

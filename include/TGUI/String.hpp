@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -29,15 +29,17 @@
 #include <TGUI/StringView.hpp>
 #include <TGUI/Utf.hpp>
 
-#include <string>
-#include <vector>
-#include <cstring>
-#include <locale>
-#include <iomanip>
-#include <ostream>
-#include <sstream>
-#include <type_traits>
-#include <initializer_list>
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <string>
+    #include <vector>
+    #include <cstring>
+    #include <locale>
+    #include <iomanip>
+    #include <ostream>
+    #include <sstream>
+    #include <type_traits>
+    #include <initializer_list>
+#endif
 
 #if TGUI_HAS_WINDOW_BACKEND_SFML
     #include <SFML/System/String.hpp>
@@ -45,7 +47,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Checks if a character is a whitespace character (e.g. space, tab, carriage return, line feed, ...)
@@ -74,6 +76,7 @@ namespace tgui
     /// @return True if the character is a digit , false otherwise
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     TGUI_NODISCARD TGUI_API bool isDigit(char32_t character);
+
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Wrapper class to store strings
@@ -753,7 +756,7 @@ namespace tgui
         void resize(std::size_t count, char16_t ch);
         void resize(std::size_t count, char32_t ch);
 
-        void swap(String& other) noexcept;
+        void swap(String& other);
 
         TGUI_NODISCARD bool contains(char c) const noexcept;
         TGUI_NODISCARD bool contains(wchar_t c) const noexcept;
@@ -1217,7 +1220,7 @@ namespace tgui
     TGUI_API std::wistream& operator>>(std::wistream& os, String& str);
 
     // UTF-8 function are defined in the header so that they can be enabled/disabled based on
-    // the compiler settings without having to recompile TGUI with a different C++ standard.
+    // the compiler settings without having to recompile TGUI with a different c++ standard.
 #if defined(__cpp_lib_char8_t) && (__cpp_lib_char8_t >= 201811L)
     inline String::String(const std::u8string& str) :
         m_string(utf::convertUtf8toUtf32(str.begin(), str.end()))

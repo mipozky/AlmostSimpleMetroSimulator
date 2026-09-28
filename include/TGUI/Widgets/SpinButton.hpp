@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -29,11 +29,9 @@
 #include <TGUI/Widgets/ClickableWidget.hpp>
 #include <TGUI/Timer.hpp>
 
-#include <cmath>
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Spin button widget
@@ -54,7 +52,7 @@ namespace tgui
         /// @param initRenderer Should the renderer be initialized? Should be true unless a derived class initializes it.
         /// @see create
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        explicit SpinButton(const char* typeName = StaticWidgetType, bool initRenderer = true);
+        SpinButton(const char* typeName = StaticWidgetType, bool initRenderer = true);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Creates a new spin button widget
@@ -146,26 +144,7 @@ namespace tgui
         /// The value can't be smaller than the minimum or bigger than the maximum.
         /// The default value is 0.
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        template <typename T, typename = typename std::enable_if_t<std::is_arithmetic<T>::value, T>>
-        void setValue(T value)
-        {
-            // TGUI_NEXT: For backwards compatibility, this function needs to accept a float without conversion warnings.
-            //            We however need the function to take a double as parameter to actually make use of the extra significant digits.
-            const double oldValue = m_value;
-
-            // Round to nearest allowed value
-            if (m_step != 0)
-                m_value = m_minimum + (std::round((static_cast<double>(value) - m_minimum) / m_step) * m_step);
-
-            // When the value is below the minimum or above the maximum then adjust it
-            if (m_value < m_minimum)
-                m_value = m_minimum;
-            else if (m_value > m_maximum)
-                m_value = m_maximum;
-
-            if (oldValue != m_value)
-                onValueChange.emit(this, static_cast<float>(m_value));
-        }
+        void setValue(float value);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Returns the current value
@@ -181,13 +160,7 @@ namespace tgui
         /// @param step  The new step size
         /// @pre The step size must be a positive value or 0.
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        template <typename T, typename = typename std::enable_if_t<std::is_arithmetic<T>::value, T>>
-        void setStep(T step)
-        {
-            // TGUI_NEXT: For backwards compatibility, this function needs to accept a float without conversion warnings.
-            //            We however need the function to take a double as parameter to actually make use of the extra significant digits in calculations.
-            m_step = static_cast<double>(step);
-        }
+        void setStep(float step);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Returns the number of positions the thumb advances with each move
@@ -295,7 +268,7 @@ namespace tgui
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Schedules a callback to regularly change the value of the spin button as long as the mouse remains pressed on an arrow
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        void callMousePressPeriodically(std::chrono::time_point<std::chrono::steady_clock> clickedTime, bool repeatedCall);
+        void callMousePressPeriodically(std::chrono::time_point<std::chrono::steady_clock> clicked);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public:
@@ -307,12 +280,12 @@ namespace tgui
 
         Orientation m_orientation = Orientation::Vertical; // Is the spin button draw horizontally (arrows next to each other) or vertically (arrows on top of each other)?
         bool m_orientationLocked = false; // Will setSize change the orientation or not?
-        std::chrono::time_point<std::chrono::steady_clock> m_lastMousePressTime;
+        std::chrono::time_point<std::chrono::steady_clock> m_PressedAt;
 
-        double m_minimum = 0;
-        double m_maximum = 10;
-        double m_value = 0;
-        double m_step = 1;
+        float m_minimum = 0;
+        float m_maximum = 10;
+        float m_value = 0;
+        float m_step = 1;
 
         // On which arrow is the mouse?
         bool m_mouseHoverOnTopArrow = false;

@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -26,19 +26,24 @@
 #define TGUI_BACKEND_SFML_HPP
 
 #include <TGUI/Config.hpp>
-#include <TGUI/Backend/Window/Backend.hpp>
+#if !TGUI_BUILD_AS_CXX_MODULE
+    #include <TGUI/Backend/Window/Backend.hpp>
+#endif
+
 #include <TGUI/Backend/Window/SFML/BackendGuiSFML.hpp>
 
 #include <SFML/Window.hpp>
 
-#include <unordered_map>
-#include <map>
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <unordered_map>
+    #include <map>
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TGUI_IGNORE_DEPRECATED_WARNINGS_START // Required for VS2017 due to inheriting a function that we deprecated
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     class TGUI_API BackendSFML : public Backend
     {
@@ -156,7 +161,7 @@ namespace tgui
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Helper function to create a system cursor
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        TGUI_NODISCARD static std::unique_ptr<sf::Cursor> createSystemCursor(Cursor::Type type);
+        TGUI_NODISCARD std::unique_ptr<sf::Cursor> createSystemCursor(Cursor::Type type);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Helper function to update the mouse cursors on all attached guis

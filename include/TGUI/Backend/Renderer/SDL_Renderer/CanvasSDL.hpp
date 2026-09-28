@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -26,14 +26,17 @@
 #define TGUI_CANVAS_SDL_HPP
 
 #include <TGUI/Backend/Renderer/SDL_Renderer/BackendTextureSDL.hpp>
-#include <TGUI/Backend/Renderer/BackendRenderTarget.hpp>
-#include <TGUI/Widgets/CanvasBase.hpp>
+
+#if !TGUI_BUILD_AS_CXX_MODULE
+    #include <TGUI/Backend/Renderer/BackendRenderTarget.hpp>
+    #include <TGUI/Widgets/CanvasBase.hpp>
+#endif
 
 #include <TGUI/extlibs/IncludeSDL.hpp>
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief CanvasSDL provides a way to directly render SDL contents on a widget

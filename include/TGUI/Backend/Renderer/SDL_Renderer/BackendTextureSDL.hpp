@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -25,14 +25,19 @@
 #ifndef TGUI_BACKEND_TEXTURE_SDL_HPP
 #define TGUI_BACKEND_TEXTURE_SDL_HPP
 
-#include <TGUI/Backend/Renderer/BackendTexture.hpp>
+#include <TGUI/Config.hpp>
+#if !TGUI_BUILD_AS_CXX_MODULE
+    #include <TGUI/Backend/Renderer/BackendTexture.hpp>
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if !TGUI_BUILD_AS_CXX_MODULE
 struct SDL_Texture;
 struct SDL_Renderer;
+#endif
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Texture implementation that makes use of SDL_Texture
@@ -46,7 +51,7 @@ namespace tgui
         ///
         /// @param renderer  The renderer to use when creating textures
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        explicit BackendTextureSDL(SDL_Renderer* renderer);
+        BackendTextureSDL(SDL_Renderer* renderer);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Destructor

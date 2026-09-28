@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -30,7 +30,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Combo box widget
@@ -40,7 +40,7 @@ namespace tgui
     public:
 
         /// @brief The side where the list will be displayed
-        enum class ExpandDirection : std::uint8_t
+        enum class ExpandDirection
         {
             Down, //!< Display the list below the combo box
             Up,   //!< Display the list above the combo box
@@ -61,7 +61,7 @@ namespace tgui
         /// @param initRenderer Should the renderer be initialized? Should be true unless a derived class initializes it.
         /// @see create
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        explicit ComboBox(const char* typeName = StaticWidgetType, bool initRenderer = true);
+        ComboBox(const char* typeName = StaticWidgetType, bool initRenderer = true);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Copy constructor
@@ -656,7 +656,6 @@ namespace tgui
         Color   m_arrowBackgroundColorDisabledCached;
         Color   m_textColorCached;
         Color   m_textColorDisabledCached;
-        float   m_roundedBorderRadiusCached = 0;
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     };

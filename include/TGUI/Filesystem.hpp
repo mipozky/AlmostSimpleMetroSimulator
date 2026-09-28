@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -27,22 +27,24 @@
 
 #include <TGUI/String.hpp>
 
-#include <cstdint>
-#include <vector>
-#include <ctime>
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <cstdint>
+    #include <vector>
+    #include <ctime>
 
-#ifdef TGUI_USE_STD_FILESYSTEM
-    #include <filesystem>
+    #ifdef TGUI_USE_STD_FILESYSTEM
+        #include <filesystem>
+    #endif
 #endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Helper functionality for filesystem access
     ///
-    /// When TGUI is built with C++17 support then std::filesystem is used on newer compilers.
+    /// When TGUI is built with c++17 support then std::filesystem is used on newer compilers.
     /// Otherwise, POSIX or Windows-specific code is used to implement the functionality.
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     class TGUI_API Filesystem

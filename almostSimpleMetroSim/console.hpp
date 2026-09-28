@@ -1,12 +1,14 @@
-#include <TGUI/TGUI.hpp>
-#include <TGUI/Backend/SFML-Graphics.hpp>
+#pragma once
+#include <TGui/TGui.hpp>
+#include <TGui/Backend/SFML-Graphics.hpp>
 #include <iostream>
 #include <string>
 #include <streambuf>
 #include <ostream>
 
 //bool showfps;
-
+extern bool showfps;
+extern bool simQuality;
 class Console {
 public:
     Console(tgui::Gui& gui) {
@@ -48,7 +50,7 @@ public:
 		return panel->isVisible();
 	}
     void log(const std::string& msg) {
-        history->addText(msg + "\n");
+        history->setText(history->getText() + msg + "\n");
         if (history->getText().length() > 10000) {
             auto currentText = history->getText();
             history->setText(currentText.substr(5000));
@@ -70,8 +72,8 @@ private:
             log("> " + cmd);
             if (cmd == "clear") history->setText("");
             else if (cmd == "exit") exit(0);
-            else if (cmd == "toggleFps") showfps = !showfps;
-            else if (cmd == "toggleSimQuality") {simQuality = !simQuality;}
+            else if (cmd == "showFps") showfps = !showfps;
+            else if (cmd == "showSimQuality") {simQuality = !simQuality;}
             else log("Unknown: " + cmd);
         }
         catch (const std::exception& e) {
@@ -134,3 +136,4 @@ private:
     std::string     buffer_;
 	bool error = false;
 };
+

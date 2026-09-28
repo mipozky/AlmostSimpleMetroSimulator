@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -29,7 +29,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     class TGUI_API ComboBoxRenderer : public WidgetRenderer
     {
@@ -346,23 +346,6 @@ namespace tgui
         TGUI_NODISCARD const Texture& getTextureArrowDisabled() const;
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// @brief Changes the radius for the rounded corners if you want to draw a rounded rectangle as background
-        /// @param radius  Radius of the corners
-        ///
-        /// @warning This property is ignored when textures are used as background
-        ///
-        /// @since TGUI 1.11
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        void setRoundedBorderRadius(float radius);
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// @brief Returns the radius for the rounded corners if you want to draw a rounded rectangle as background
-        /// @return Radius of the corners
-        /// @since TGUI 1.11
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        TGUI_NODISCARD float getRoundedBorderRadius() const;
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Sets the renderer data of the list box
         ///
         /// @param rendererData  Data about how the list box should look
@@ -373,11 +356,6 @@ namespace tgui
         /// @brief Returns the renderer data of the list box
         ///
         /// @return Data about how the list box looks
-        ///
-        /// Example usage:
-        /// @code
-        /// tgui::ListBoxRenderer(comboBox->getRenderer()->getListBox()).setTextColor(tgui::Color::Red);
-        /// @endcode
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         TGUI_NODISCARD std::shared_ptr<RendererData> getListBox() const;
 

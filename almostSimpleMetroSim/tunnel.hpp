@@ -1,4 +1,5 @@
 // 438 772
+#pragma once
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 #include <mutex>

@@ -1,3 +1,8 @@
+
+
+
+
+
 #pragma once
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
@@ -6,12 +11,12 @@
 #include <array>
 #include <string>
 #include <unordered_map>
-#include <entt/entt.hpp>
+
 #include "mevent.hpp"
 #include "MGraphics.hpp"
 
-using namespace sf;
 using namespace std;
+using namespace sf;
 
 struct animDrive {
     enum class EaseType { Linear, EaseIn, EaseOut, EaseInOut, Custom };
@@ -61,88 +66,11 @@ struct animDrive {
     }
 };
 
-struct wire { int val = 0; };
-
-
-struct fSprite {
-    Sprite    sprite;
-    Vector2f  relPos;
-    animDrive anim;
-
-    explicit fSprite(const Sprite& spr) : sprite(spr), relPos(spr.getPosition()) {}
-
-    void updateAnim(float dt, bool forward = true) {
-        if (forward) anim.stepForward(dt);
-        else         anim.stepBackward(dt);
-        relPos.x = anim.RelcurPos;
-    }
-};
-
-
-namespace train_base {
-
-
-    struct RelPos {
-        Vector2f pos{};
-    };
-
-
-    struct Movement {
-        bool  distanceTaken = false;
-        float speed = 0.f;
-        float accel = 0.f;
-    };
-
-
-    struct WireBus {
-        array<wire, 32> local{};
-        array<wire, 32> train{};
-    };
-
-
-    struct PressureLines {
-        float trainLine = 0.f;
-        float breakLine = 0.f;
-    };
-
-
-    struct Length {
-        int mmlength = 20000;
-    };
-
-
-    struct Scale {
-        Vector2f scale{ 1.f, 1.f };
-    };
-
-
-    struct SpriteList {
-        vector<fSprite> sprites;
-
-        void add(const Sprite& spr) { sprites.emplace_back(spr); }
-        void add(const Sprite& spr, animDrive anim) {
-            sprites.emplace_back(spr);
-            sprites.back().anim = anim;
-        }
-
-        void updatePositions(Vector2f wagPos) {
-            for (auto& s : sprites)
-                s.sprite.setPosition(s.relPos + wagPos);
-        }
-        void applyScale(Vector2f sc) {
-            for (auto& s : sprites)
-                s.sprite.setScale(sc);
-        }
-    };
-
-
-    struct IsHead {};
-
-
-    struct EventBuffer {
-        vector<MEvent> events;
-    };
-    struct TrainUi {
+class Ent_Train : public mg::DrawBase
+{
+protected:
+    class UI {
+    public:
         vector<mg::Button>  buttons;
         vector<mg::TickBox> switches;
         vector<mg::Lever>   levers;
@@ -161,7 +89,7 @@ namespace train_base {
             float moveAngle, int positions, function<void()> cb)
         {
             levers.emplace_back(Vector2f(0, 0), pos, handleColsize, handleColpos, color,
-                font, text, window,
+                text, window,
                 handleSpr, handleSpriteOffset,
                 baseSpr, baseSpriteOffset,
                 hingeloc, startAngle_, moveAngle, positions, false, cb);
@@ -185,7 +113,7 @@ namespace train_base {
             switches.emplace_back(size, pos, font, text, window, cb,
                 boxTex, checkTex, negTex);
         }
-        void addUISprite(const Sprite& spr) { uiSprites.push_back(spr); }
+        void adduiSprite(const Sprite& spr) { uiSprites.push_back(spr); }
 
         void checkEvents(const Event& ev) {
             for (auto& b : buttons)  b.checkPress(ev);
@@ -193,92 +121,302 @@ namespace train_base {
             for (auto& l : levers)   l.CheckMovement(ev);
         }
         void draw(RenderWindow* window) {
-            for (auto& spr : uiSprites) window->draw(spr);
-            for (auto& b : buttons)   b.draw();
-            for (auto& s : switches)  s.draw();
+            // quickLog("started to draw");
             for (auto& l : levers)    l.draw();
+            for (auto& spr : uiSprites) window->draw(spr);
+            // quickLog("drawn sprites");
+            for (auto& b : buttons)   b.draw();
+            // quickLog("drawn buttons");
+            for (auto& s : switches)  s.draw();
+            // quickLog("drawn switches");
+            // quickLog("drawn levers");
             for (auto& g : gauges)    g.draw();
+            // quickLog("drawn gauges");
         }
     };
-    struct WagonCount {
-        int count = 1;
-	};
-
-}
-namespace train_base_systems {
-
-    namespace wire_bus {
-
-        inline void writeWire(train_base::WireBus& wb, int idx, int val) {
-            wb.local[idx].val = val;
+    struct KeyListener {
+        unordered_map<sf::Keyboard::Key, std::function<void()>> bindings;
+        unordered_map<sf::Keyboard::Key, bool> pressedKeys;
+        void bind(sf::Keyboard::Key key, std::function<void()> fn) {
+            bindings[key] = std::move(fn);
+            pressedKeys[key] = false;
         }
-        inline int readWire(const train_base::WireBus& wb, int idx) {
-            return wb.train[idx].val;
+
+        void process(const std::vector<MEvent>& input) const {
+            for (const auto& m : input) {
+                if (m.sender != "window" || m.type != "KeyPressed") continue;
+                auto it = bindings.find(m.key);
+                if (it != bindings.end()) it->second();
+            }
+        }
+    };
+    KeyListener keyListener;
+    struct fSprite {
+        Sprite    sprite;
+        Vector2f  relPos;
+        animDrive anim;
+
+        explicit fSprite(const Sprite& spr) : sprite(spr), relPos(spr.getPosition()) {}
+
+        void updateAnim(float dt, bool forward = true) {
+            if (forward) anim.stepForward(dt);
+            else         anim.stepBackward(dt);
+            relPos.x = anim.RelcurPos;
+        }
+        void Hide() {
+            sprite.setColor(Color(255, 255, 255, 0));
+        }
+        void Show() {
+            sprite.setColor(Color(255, 255, 255, 255));
+        }
+        void ToggleVisible() {
+            if (sprite.getColor() == Color(255, 255, 255, 0)) Show();
+            else Hide();
+        }
+        void SetVisible(bool visible) { if (visible) Show(); else Hide(); }
+    };
+    int mmlength = 20000;
+    struct wireBus {
+
+        array<float, 32> local{};
+        array<float, 32> train{};
+
+        vector <pair<int, int>> swaps{};
+        bool swapON = false;
+        void addSwap(int v1, int v2) {
+            swaps.push_back(pair<int, int>{v1, v2});
+        }
+        void writeWire(int idx, int val) {
+            if (swapON) {
+                for (auto& pair : swaps) {
+                    if (idx == pair.first) {
+                        idx = pair.second;
+                        break;
+                    }
+                    else if (idx == pair.second) {
+                        idx = pair.first;
+                        break;
+                    }
+                }
+            }
+            train[idx] += (val - local[idx]);
+            local[idx] = val;
+        }
+        inline int readWire(int idx) {
+            if (swapON) {
+                for (auto& pair : swaps) {
+                    if (idx == pair.first) { 
+                        idx = pair.second;
+                        break;
+                    }
+                    else if (idx == pair.second) {
+                        idx = pair.first;
+                        break;
+                    }
+                }
+            }
+            return train[idx];
+        }
+    };
+
+    Vector2f scale;
+    Vector2f pos{};
+    int entityId;
+    RenderWindow* window;
+    wireBus wireBus;
+
+    void drawBase() override {
+        for (auto& s : spriteList.sprites) {
+            window->draw(s.sprite);
         }
     }
 
-    inline void applyScale(entt::registry& reg, float coef = 1.f) {
-        auto view = reg.view<train_base::Length, train_base::Scale, train_base::SpriteList>();
-        for (auto e : view) {
-            auto& len = view.get<train_base::Length>(e);
-            auto& sc = view.get<train_base::Scale>(e);
-            auto& spl = view.get<train_base::SpriteList>(e);
-            float s = len.mmlength * coef / 10000.f;
-            sc.scale = { s, s };
-            spl.applyScale(sc.scale);
-        }
+    virtual vector<MEvent> simulate(vector<MEvent>* input, float dt) {
+		//speed += accel * dt;
+        return {};
     }
+    float movedDistance = 0.0f;
+    bool distanceTaken = false;
 
-   
-    inline void updatePositions(entt::registry& reg) {
-        auto view = reg.view<train_base::RelPos, train_base::SpriteList>();
-        for (auto e : view) {
-            auto& rp = view.get<train_base::RelPos>(e);
-            auto& spl = view.get<train_base::SpriteList>(e);
-            spl.updatePositions(rp.pos);
+    struct button {
+        bool value() {
+            taken = true;
+            return val;
+        };
+        bool taken = false;
+        bool val = false;
+        void process() {
+            if (taken) val = false;
         }
-    }
-
+    };
     
-    inline void drawAll(entt::registry& reg, RenderWindow& window) {
-        auto view = reg.view<train_base::SpriteList>();
-        for (auto e : view) {
-            for (auto& s : view.get<train_base::SpriteList>(e).sprites)
-                window.draw(s.sprite);
+public:
+    virtual ~Ent_Train() {
+        std::ofstream file("force" + std::to_string(entityId) + ".txt", std::ios::app);
+
+            if (file.is_open()) {
+                string sum = "";
+				for (const auto& force : forceHistory) {
+					sum += std::to_string(force) + "\n";
+				}
+				file << sum;
+				file.close();
+            }
+    };
+    float main750v = 0;
+    UI ui;
+    struct SpriteList {
+        vector<fSprite> sprites;
+
+        void add(const Sprite& spr) { sprites.emplace_back(spr); }
+        void add(const Sprite& spr, animDrive anim) {
+            sprites.emplace_back(spr);
+            sprites.back().anim = anim;
         }
-    }
 
-    inline void drawUI(entt::registry& reg, RenderWindow& window) {
-        auto view = reg.view<train_base::IsHead, train_base::TrainUi>();
-        for (auto e : view)
-            view.get<train_base::TrainUi>(e).draw(&window);
-    }
-
-    
-    inline void checkUIEvents(entt::registry& reg, const Event& ev) {
-        auto view = reg.view<train_base::IsHead, train_base::TrainUi>();
-        for (auto e : view)
-            view.get<train_base::TrainUi>(e).checkEvents(ev);
-    }
-
-
-    inline void updateWires(entt::registry& reg, const vector<entt::entity>& order) {
-        array<int, 32> total{};
-        for (auto e : order) {
-            auto& wb = reg.get<train_base::WireBus>(e);
-            for (int i = 0; i < 32; i++)
-                total[i] += wb.local[i].val;
+        void updatePositions(Vector2f wagPos) {
+            for (auto& s : sprites)
+                s.sprite.setPosition(s.relPos + wagPos);
         }
-        for (auto e : order) {
-            auto& wb = reg.get<train_base::WireBus>(e);
-            for (int i = 0; i < 32; i++)
-                wb.train[i].val = total[i];
+        void applyScale(Vector2f sc) {
+            for (auto& s : sprites)
+                s.sprite.setScale(sc);
         }
+    };
+    SpriteList spriteList;
+    float speed = 0.f;
+    float accel = 0.f;
+    int wagonCount = 1;
+
+    float takeMovedDistance() { distanceTaken = !distanceTaken; return movedDistance; }
+    bool isHead = false;
+    vector<MEvent> events;
+
+    Ent_Train(int id, sf::RenderWindow* window) {
+        entityId = id;
+        this->window = window;
     }
 
-    inline float readSpeed(entt::registry& reg, entt::entity e) {
-        reg.get<train_base::Movement>(e).distanceTaken = true;
-        return reg.get<train_base::Movement>(e).speed;
-	}
+    Vector2f getPos() { return pos; }
+    int      getId() { return entityId; }
+    int      getSpriteCount() { return (int)spriteList.sprites.size(); }
 
-} 
+    Sprite& getSprite(int id) { return spriteList.sprites[id].sprite; }
+
+    array<float, 32> sendWires() { return wireBus.local; }
+    void            setWires(array<float, 32> wires) { wireBus.train = wires; }
+
+
+
+    void setScale(float coef = 1) {
+        scale.x = scale.y = mmlength * coef / 10000.0f;
+        for (auto& s : spriteList.sprites) s.sprite.setScale(scale);
+    }
+
+    void updatePos() {
+        for (auto& s : spriteList.sprites) s.sprite.setPosition(s.relPos + pos);
+    }
+
+    void setPos(Vector2f newPos) {
+        pos = newPos;
+        updatePos();
+    }
+
+    vector<MEvent> getSentMev() { return events; }
+
+    void sim(vector<MEvent>* input, float dt) {
+
+        if (distanceTaken) movedDistance = 0.0f;
+        vector<MEvent> res = simulate(input, dt);
+        events.assign(res.begin(), res.end());
+    }
+
+    void checkPreses(const Event& ev) {
+        if (!isHead) return;
+        ui.checkEvents(ev);
+    }
+    void drawui() {
+        if (!isHead) return;
+        ui.draw(window);
+    }
+	float w1t1pos = 0.0f, w2t1pos = 0.0f, w1t2pos = 0.0f, w2t2pos = 0.0f;
+    double TrainLine = 0;
+    double BrakeLine = 0;
+    bool TrainLineOpen = 0;
+	bool brakeValveFront = 0, brakeValveRear = 0;
+	bool trainValveFront = 0, trainValveRear = 0;
+	bool reversed = false;
+	int wagonId = 0;
+	double netForce = 0.0;
+	double mass = 0.0;
+    int capacity = 0;
+    vector <double> forceHistory;
+protected:
+    struct relay {
+        bool   normallyClosed = false;
+        double closeTime = 0.050;
+        double openTime = 0.050;
+        bool   pneumatic = false;
+        double Time = 0.0;
+        bool   hasChangeTime = false;
+        double ChangeTime = 0.0;
+        double Value = 0.0;
+        bool value = 0;
+        double TargetValue = 0.0; 
+        double Blocked = 0.0;
+
+        relay(bool normallyClosed = false)
+            : normallyClosed(normallyClosed)
+        {
+            Value = TargetValue = normallyClosed ? 1.0 : 0.0;
+        }
+        void sim(double dt) {
+            Time += dt;
+            if (hasChangeTime && Time > ChangeTime) {
+                Value = TargetValue;
+                hasChangeTime = false;
+            }
+            if (Value > 0.5) value = 1;
+            else value = 0;
+        }
+        void close(double linePressure = -1.0) {
+            if (Blocked > 0.0) return;
+            if (Value == 1.0 && TargetValue == 1.0) return;
+            if (pneumatic && linePressure < 3.0) return;
+
+            if (!hasChangeTime || TargetValue != 1.0) {
+                ChangeTime = Time + closeTime;
+                hasChangeTime = true;
+            }
+            if (Value == 1.0) hasChangeTime = false;
+
+            TargetValue = 1.0;
+        }
+        void open() {
+            if (Blocked > 0.0) return;
+            if (Value == 0.0 && TargetValue == 0.0) return;
+
+            if (!hasChangeTime || TargetValue != 0.0) {
+                ChangeTime = Time + openTime;
+                hasChangeTime = true;
+            }
+            if (Value == 0.0) hasChangeTime = false;
+
+            TargetValue = 0.0;
+        }
+        void set(bool v, double linePressure = -1.0) {
+            if (v) close(linePressure);
+            else   open();
+        }
+    };
+    struct LevelRelay : relay {
+        double triggerLevel = 0.0;
+
+        explicit LevelRelay(double level = 0.0, bool normallyClosed = false)
+            : relay(normallyClosed), triggerLevel(level) {
+        }
+        void set(double magnitude) {
+            relay::set(fabs(magnitude) > triggerLevel);
+        }
+    };
+};

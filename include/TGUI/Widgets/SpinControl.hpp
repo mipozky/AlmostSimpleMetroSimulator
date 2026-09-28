@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -31,7 +31,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Spin control widget
@@ -52,7 +52,7 @@ namespace tgui
         /// @param initRenderer Should the renderer be initialized? Should be true unless a derived class initializes it.
         /// @see create
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        explicit SpinControl(const char* typeName = StaticWidgetType, bool initRenderer = true);
+        SpinControl(const char* typeName = StaticWidgetType, bool initRenderer = true);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Copy constructor
@@ -179,19 +179,7 @@ namespace tgui
         /// The value can't be smaller than the minimum or bigger than the maximum.
         /// The default value is 0.
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        template <typename T, typename = typename std::enable_if_t<std::is_arithmetic<T>::value, T>>
-        bool setValue(T value)
-        {
-            // TGUI_NEXT: For backwards compatibility, this function needs to accept a float without conversion warnings.
-            //            We however need the function to take a double as parameter to actually make use of the extra significant digits.
-            if (m_spinButton->getValue() != static_cast<float>(value) && inRange(static_cast<float>(value)))
-            {
-                m_spinButton->setValue(value);
-                setString(String::fromNumberRounded(value, m_decimalPlaces));
-                return true;
-            }
-            return false;
-        }
+        bool setValue(float value);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Returns the current value
@@ -207,13 +195,7 @@ namespace tgui
         /// @param step  The new step size
         /// @pre The step size must be a positive value or 0.
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        template <typename T, typename = typename std::enable_if_t<std::is_arithmetic<T>::value, T>>
-        void setStep(T step)
-        {
-            // TGUI_NEXT: For backwards compatibility, this function needs to accept a float without conversion warnings.
-            //            We however need the function to take a double as parameter to actually make use of the extra significant digits in calculations.
-            m_spinButton->setStep(step);
-        }
+        void setStep(float step);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Returns the number of positions the thumb advances with each move
@@ -311,7 +293,7 @@ namespace tgui
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Checks whether a value lies between the minimum and maximum
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        bool inRange(float value) const;
+        bool inRange(const float value) const;
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Updates the text in the edit box

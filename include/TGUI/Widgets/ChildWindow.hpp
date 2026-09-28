@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -30,11 +30,13 @@
 #include <TGUI/Widgets/Button.hpp>
 #include <TGUI/Renderers/ChildWindowRenderer.hpp>
 
-#include <limits>
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <limits>
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Child window widget
@@ -76,7 +78,7 @@ namespace tgui
         /// @param initRenderer Should the renderer be initialized? Should be true unless a derived class initializes it.
         /// @see create
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        explicit ChildWindow(const char* typeName = StaticWidgetType, bool initRenderer = true);
+        ChildWindow(const char* typeName = StaticWidgetType, bool initRenderer = true);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Copy constructor
@@ -155,7 +157,7 @@ namespace tgui
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Returns the space available for widgets inside the container
-        /// @return Size without title bar, borders or client padding
+        /// @return Size without borders title bar
         ///
         /// For ChildWindow, the inner size is the same as the client size.
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -166,7 +168,7 @@ namespace tgui
         ///
         /// @param size  New size of the child window contents
         ///
-        /// This sets the size of the child window excluding the title bar, borders and client padding.
+        /// This sets the size of the child window excluding the title bar and the borders.
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         virtual void setClientSize(const Layout2d& size);
 
@@ -175,7 +177,7 @@ namespace tgui
         ///
         /// @return Size of the child window contents
         ///
-        /// This returns the size of the child window excluding the title bar, borders and client padding.
+        /// This sets the size of the child window excluding the title bar and the borders.
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         TGUI_NODISCARD Vector2f getClientSize() const;
 
@@ -463,22 +465,6 @@ namespace tgui
         void updateTitleBarHeight();
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // Returns the size of the title bar without its borders
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        TGUI_NODISCARD Vector2f getInnerTitleBarSize() const;
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // Returns the size of the client area plus the client padding around it
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        TGUI_NODISCARD Vector2f getInnerSizeWithPadding() const;
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // Returns the difference between the child window size and its client size.
-        // This returns the combined size of the title bar, borders and padding.
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        TGUI_NODISCARD Vector2f getDecorationSize() const;
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Updates the mouse cursor for resizable child windows
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         void updateResizeMouseCursor(Vector2f mousePos);
@@ -592,7 +578,6 @@ namespace tgui
 
         // Cached renderer properties
         Borders m_bordersCached;
-        Padding m_clientPaddingCached;
         Color   m_borderColorCached;
         Color   m_borderColorFocusedCached;
         Color   m_titleColorCached;

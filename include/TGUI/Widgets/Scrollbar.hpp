@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -29,11 +29,13 @@
 #include <TGUI/Renderers/ScrollbarRenderer.hpp>
 #include <TGUI/CopiedSharedPtr.hpp>
 
-#include <chrono>
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <chrono>
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Scrollbar widget
@@ -48,7 +50,7 @@ namespace tgui
         static constexpr const char StaticWidgetType[] = "Scrollbar"; //!< Type name of the widget
 
         /// @brief Defines when the scrollbar shows up
-        enum class Policy : std::uint8_t
+        enum class Policy
         {
             Automatic,  //!< Show the scrollbar only when needed (default)
             Always,     //!< Always show the scrollbar, even when the contents fits
@@ -62,7 +64,7 @@ namespace tgui
         /// @param initRenderer Should the renderer be initialized? Should be true unless a derived class initializes it.
         /// @see create
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        explicit Scrollbar(const char* typeName = StaticWidgetType, bool initRenderer = true);
+        Scrollbar(const char* typeName = StaticWidgetType, bool initRenderer = true);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Creates a new scrollbar widget
@@ -368,14 +370,6 @@ namespace tgui
         TGUI_NODISCARD Widget::Ptr clone() const override;
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    private:
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // Schedules a callback to regularly change the value of the scrollbar as long as the mouse remains pressed on an arrow
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        void callMousePressPeriodically(std::chrono::time_point<std::chrono::steady_clock> clickedTime, bool repeatedCall);
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public:
 
         SignalUInt onValueChange = {"ValueChanged"}; //!< Value of the scrollbar changed. Optional parameter: new value
@@ -383,9 +377,8 @@ namespace tgui
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     protected:
 
-        enum class Part : std::uint8_t
+        enum class Part
         {
-            None,
             Track,
             Thumb,
             ArrowUp,
@@ -393,7 +386,7 @@ namespace tgui
         };
 
         // Keep track on which part of the scrollbar the mouse is standing
-        Part m_mouseHoverOverPart = Part::None;
+        Part m_mouseHoverOverPart = Part::Thumb;
 
         // When the mouse went down, did it go down on top of the thumb? If so, where?
         bool m_mouseDownOnThumb = false;
@@ -416,9 +409,7 @@ namespace tgui
         Scrollbar::Policy m_policy = Scrollbar::Policy::Automatic;
 
         // Did the mouse went down on one of the arrows?
-        bool m_mouseDownOnIncreaseArrow = false;
-        bool m_mouseDownOnDecreaseArrow = false;
-        std::chrono::time_point<std::chrono::steady_clock> m_lastMousePressTime;
+        bool m_mouseDownOnArrow = false;
 
         bool m_sizeSet = false; // Has setSize been called?
 
@@ -464,7 +455,7 @@ namespace tgui
         /// @brief Default constructor
         /// @param orientation  Whether the scrollbar lies horizontally or vertically
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        explicit ScrollbarChildWidget(Orientation orientation = Orientation::Vertical); // TGUI_NEXT: No more default option
+        ScrollbarChildWidget(Orientation orientation = Orientation::Vertical); // TGUI_NEXT: No more default option
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Returns whether the left mouse button has been pressed on top of the thumb of the scrollbar

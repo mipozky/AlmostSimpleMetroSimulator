@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -27,11 +27,13 @@
 
 #include <TGUI/Config.hpp>
 
-#include <memory>
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <memory>
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -41,7 +43,7 @@ namespace tgui
     public:
 
         template <typename... Args>
-        explicit CopiedSharedPtr(Args&&... args) noexcept
+        CopiedSharedPtr(Args&&... args) noexcept
             : m_WidgetPtr{std::make_shared<WidgetType>(std::forward<Args>(args)...)}
         {
         }
@@ -72,7 +74,7 @@ namespace tgui
             return *this;
         }
 
-        explicit operator bool() const noexcept
+        operator bool() const noexcept
         {
             return (m_WidgetPtr != nullptr);
         }

@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -30,11 +30,13 @@
 #include <TGUI/Global.hpp>
 #include <TGUI/Backend/Renderer/BackendTexture.hpp>
 
-#include <cstdint>
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <cstdint>
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Base class for font implementations that depend on the backend
@@ -174,7 +176,7 @@ namespace tgui
         TGUI_NODISCARD virtual float getAscent(unsigned int characterSize) = 0;
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// @brief Returns the maximum height of a glyph below the baseline as a negative value
+        /// @brief Returns the maximum height of a glyph below the baseline
         ///
         /// @param characterSize  Size of the characters
         ///
@@ -275,7 +277,7 @@ namespace tgui
         ///
         /// Calling this function with the same parameters results in the same id, while other parameters result in another id.
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        TGUI_NODISCARD static std::uint64_t constructGlyphKey(char32_t codePoint, unsigned int characterSize, bool bold, float outlineThickness);
+        TGUI_NODISCARD std::uint64_t constructGlyphKey(char32_t codePoint, unsigned int characterSize, bool bold, float outlineThickness) const;
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     protected:

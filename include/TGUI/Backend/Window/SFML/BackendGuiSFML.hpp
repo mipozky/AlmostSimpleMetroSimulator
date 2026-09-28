@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -26,13 +26,15 @@
 #define TGUI_BACKEND_GUI_SFML_HPP
 
 #include <TGUI/Config.hpp>
-#include <TGUI/Backend/Window/BackendGui.hpp>
+#if !TGUI_BUILD_AS_CXX_MODULE
+    #include <TGUI/Backend/Window/BackendGui.hpp>
+#endif
 
 #include <SFML/Window.hpp>
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -50,7 +52,7 @@ namespace tgui
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Destructor
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ~BackendGuiSFML() override;
+        ~BackendGuiSFML();
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Passes the event to the widgets
@@ -177,7 +179,7 @@ namespace tgui
                 // Let the gui handle the event
                 bool eventHandledByGui = false;
                 if (passEventToGui)
-                    eventHandledByGui = this->handleEvent(std::forward<EventType>(event));
+                    eventHandledByGui = handleEvent(std::forward<EventType>(event));
 
                 // After the gui has handled the events, we call the handlers that return nothing.
                 // These handlers can have an optional bool parameter that indicates whether the event was processed by the gui.

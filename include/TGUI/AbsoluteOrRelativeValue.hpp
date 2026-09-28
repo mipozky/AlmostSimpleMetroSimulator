@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -28,11 +28,13 @@
 #include <TGUI/Global.hpp>
 #include <TGUI/String.hpp>
 
-#include <type_traits>
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <type_traits>
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Class to store the a value that is either a constant or a ratio
@@ -172,26 +174,6 @@ namespace tgui
             m_ratio    = ratio;
         }
     };
-
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    // Allow writing 50_percent instead of RelativeValue(0.5) after adding "using namespace tgui::literals::percent;"
-    // This can also be used in layouts, where you can replace e.g. the "40%" string with 40_percent to skip string parsing
-    inline namespace literals
-    {
-        inline namespace percent
-        {
-            constexpr RelativeValue operator""_percent(long double n)
-            {
-                return RelativeValue{static_cast<float>(n / 100.0L)};
-            }
-
-            constexpr RelativeValue operator""_percent(unsigned long long n)
-            {
-                return RelativeValue{static_cast<float>(n) / 100.f};
-            }
-        }
-    }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }

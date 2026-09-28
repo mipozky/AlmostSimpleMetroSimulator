@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -28,13 +28,18 @@
 #include <TGUI/Backend/Renderer/GLES2/BackendTextureGLES2.hpp>
 #include <TGUI/Backend/Renderer/GLES2/BackendRenderTargetGLES2.hpp>
 #include <TGUI/Backend/Renderer/GLES2/CanvasGLES2.hpp>
-#include <TGUI/Backend/Renderer/BackendRenderer.hpp>
 
-#include <memory>
+#if !TGUI_BUILD_AS_CXX_MODULE
+    #include <TGUI/Backend/Renderer/BackendRenderer.hpp>
+#endif
+
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <memory>
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Backend renderer that uses OpenGL ES 2 or 3 (depending on the loaded OpenGL ES context that you have to provide)
@@ -60,7 +65,7 @@ namespace tgui
         /// backend->setRenderer(std::make_shared<BackendRendererGLES2>(glfwGetProcAddress));
         /// @endcode
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        explicit BackendRendererGLES2(ContextLoadFuncType contextLoadFunction);
+        BackendRendererGLES2(ContextLoadFuncType contextLoadFunction);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Helper constructor so that you can pass SDL_GL_GetProcAddress without needing to cast the type
@@ -68,7 +73,7 @@ namespace tgui
         ///
         /// @param contextLoadFunction  Function that gets the address of an OpenGL function
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        explicit BackendRendererGLES2(SDLContextLoadFuncType contextLoadFunction);
+        BackendRendererGLES2(SDLContextLoadFuncType contextLoadFunction);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Creates a new empty texture object

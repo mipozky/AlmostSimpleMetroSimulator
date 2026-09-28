@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -30,9 +30,11 @@
     #error "TGUI wasn't build with the SFML_GRAPHICS backend"
 #endif
 
-#include <TGUI/Backend/Window/SFML/BackendSFML.hpp>
-#include <TGUI/Backend/Renderer/SFML-Graphics/BackendRendererSFML.hpp>
-#include <TGUI/Backend/Font/SFML-Graphics/BackendFontSFML.hpp>
+#if !TGUI_BUILD_AS_CXX_MODULE
+    #include <TGUI/Backend/Window/SFML/BackendSFML.hpp>
+    #include <TGUI/Backend/Renderer/SFML-Graphics/BackendRendererSFML.hpp>
+    #include <TGUI/Backend/Font/SFML-Graphics/BackendFontSFML.hpp>
+#endif
 
 #include <SFML/Graphics.hpp>
 
@@ -40,7 +42,7 @@
   #include <SFML/Main.hpp>
 #endif
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     inline namespace SFML_GRAPHICS
     {
@@ -63,7 +65,7 @@ namespace tgui
             ///
             /// @param window  The SFML window that will be used by the gui
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            explicit Gui(sf::RenderWindow& window)
+            Gui(sf::RenderWindow& window)
             {
                 setWindow(window);
             }
@@ -78,7 +80,7 @@ namespace tgui
             ///          regular sf::Window (not an sf::RenderWindow) to enable this functionality while still rendering to the
             ///          target that is passed here.
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            explicit Gui(sf::RenderTarget& target)
+            Gui(sf::RenderTarget& target)
             {
                 setTarget(target);
             }

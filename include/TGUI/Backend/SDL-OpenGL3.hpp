@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -30,11 +30,13 @@
     #error "TGUI wasn't build with the SDL_OPENGL3 backend"
 #endif
 
-#include <TGUI/Backend/Window/SDL/BackendSDL.hpp>
-#include <TGUI/Backend/Renderer/OpenGL3/BackendRendererOpenGL3.hpp>
-#include <TGUI/Backend/Font/FreeType/BackendFontFreeType.hpp>
+#if !TGUI_BUILD_AS_CXX_MODULE
+    #include <TGUI/Backend/Window/SDL/BackendSDL.hpp>
+    #include <TGUI/Backend/Renderer/OpenGL3/BackendRendererOpenGL3.hpp>
+    #include <TGUI/Backend/Font/FreeType/BackendFontFreeType.hpp>
+#endif
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     inline namespace SDL_OPENGL3
     {

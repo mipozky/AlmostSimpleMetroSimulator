@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -31,7 +31,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Radio button widget
@@ -52,7 +52,7 @@ namespace tgui
         /// @param initRenderer Should the renderer be initialized? Should be true unless a derived class initializes it.
         /// @see create
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        explicit RadioButton(const char* typeName = StaticWidgetType, bool initRenderer = true);
+        RadioButton(const char* typeName = StaticWidgetType, bool initRenderer = true);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Creates a new radio button widget
@@ -111,29 +111,6 @@ namespace tgui
         /// @return Offset of the widget
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         TGUI_NODISCARD Vector2f getWidgetOffset() const override;
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// @brief Sets the maximum width that is used to determine when to split the text over multiple lines
-        /// @param maxWidth  Width used for word wrapping
-        ///
-        /// @warning This width includes the size of the check box itself and the spacing between the box and the text.
-        ///          The max width thus starts calculating from the left position of the widget.
-        ///
-        /// When set to 0 (default), there is no limit for the text width.
-        ///
-        /// @since TGUI 1.10
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        void setMaxWidth(float maxWidth);
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// @brief Returns the maximum width that is used to determine when to split the text over multiple lines
-        /// @return Width used for word wrapping
-        ///
-        /// @see setMaxWidth
-        ///
-        /// @since TGUI 1.10
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        TGUI_NODISCARD float getMaxWidth() const;
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Enables or disables the widget
@@ -321,10 +298,7 @@ namespace tgui
         bool m_allowTextClick = true;
 
         // This will contain the text that is written next to radio button.
-        String m_caption;
         Text m_text;
-
-        float m_maxWidth = 0;
 
         Sprite m_spriteUnchecked;
         Sprite m_spriteChecked;

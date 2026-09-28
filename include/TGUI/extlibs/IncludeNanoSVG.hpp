@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -67,10 +67,10 @@
     #define NANOSVGRAST_IMPLEMENTATION
 
     // Include the stdlib headers used by nanosvg to allow wrapping the includes in a namespace
-    #include <cstring>
-    #include <cstdlib>
-    #include <cstdio>
-    #include <cmath>
+    #include <string.h>
+    #include <stdlib.h>
+    #include <stdio.h>
+    #include <math.h>
 
     namespace tgui
     {

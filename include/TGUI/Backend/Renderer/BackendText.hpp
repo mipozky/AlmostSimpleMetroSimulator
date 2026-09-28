@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -32,7 +32,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Base class for text implementations that depend on the backend
@@ -175,14 +175,14 @@ namespace tgui
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Helper function used by updateVertices to add vertices for a glyph
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        static void addGlyphQuad(std::vector<Vertex>& vertices, Vector2f position, const Vertex::Color& color,
-                                 const FontGlyph& glyph, float fontScale, float italicShear);
+        void addGlyphQuad(std::vector<Vertex>& vertices, Vector2f position, const Vertex::Color& color,
+                          const FontGlyph& glyph, float fontScale, float italicShear);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Helper function used by updateVertices to add vertices for a line
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        static void addLine(std::vector<Vertex>& vertices, float lineLength, float lineTop, const Vertex::Color& color,
-                            float offset, float thickness, float outlineThickness, float fontScale);
+        void addLine(std::vector<Vertex>& vertices, float lineLength, float lineTop, const Vertex::Color& color,
+                     float offset, float thickness, float outlineThickness, float fontScale);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     protected:

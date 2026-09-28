@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -38,13 +38,18 @@
     #define TTF_GetFontLineSkip TTF_FontLineSkip
 #endif
 
-#include <TGUI/Backend/Font/BackendFont.hpp>
+#include <TGUI/Config.hpp>
+#if !TGUI_BUILD_AS_CXX_MODULE
+    #include <TGUI/Backend/Font/BackendFont.hpp>
+#endif
 
-#include <unordered_map>
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <unordered_map>
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Font implementations that uses SDL_ttf to load glyphs
@@ -139,7 +144,7 @@ namespace tgui
         TGUI_NODISCARD float getAscent(unsigned int characterSize) override;
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// @brief Returns the maximum height of a glyph below the baseline as a negative value
+        /// @brief Returns the maximum height of a glyph below the baseline
         ///
         /// @param characterSize  Size of the characters
         ///

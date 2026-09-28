@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -26,19 +26,26 @@
 #define TGUI_BACKEND_GLFW_HPP
 
 #include <TGUI/Backend/Window/GLFW/BackendGuiGLFW.hpp>
-#include <TGUI/Backend/Window/Backend.hpp>
 
-#include <unordered_map>
-#include <map>
+#if !TGUI_BUILD_AS_CXX_MODULE
+    #include <TGUI/Backend/Window/Backend.hpp>
+#endif
+
+#if !TGUI_EXPERIMENTAL_USE_STD_MODULE
+    #include <unordered_map>
+    #include <map>
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using GLFWwindow = struct GLFWwindow;
-using GLFWcursor = struct GLFWcursor;
+#if !TGUI_BUILD_AS_CXX_MODULE
+    using GLFWwindow = struct GLFWwindow;
+    using GLFWcursor = struct GLFWcursor;
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     class TGUI_API BackendGLFW : public Backend
     {

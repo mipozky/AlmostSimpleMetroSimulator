@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // TGUI - Texus' Graphical User Interface
-// Copyright (C) 2012-2026 Bruno Van de Velde (vdv_b@tgui.eu)
+// Copyright (C) 2012-2025 Bruno Van de Velde (vdv_b@tgui.eu)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -31,7 +31,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace tgui
+TGUI_MODULE_EXPORT namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Progress bar widget
@@ -50,7 +50,7 @@ namespace tgui
         ///
         /// Determines in which direction the progress bar is filled when value goes from minimum to maximum.
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        enum class FillDirection : std::uint8_t
+        enum class FillDirection
         {
             LeftToRight,  //!< Start filling at the left side and go to the right
             RightToLeft,  //!< Start filling at the right side and go to the left
@@ -65,7 +65,7 @@ namespace tgui
         /// @param initRenderer Should the renderer be initialized? Should be true unless a derived class initializes it.
         /// @see create
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        explicit ProgressBar(const char* typeName = StaticWidgetType, bool initRenderer = true);
+        ProgressBar(const char* typeName = StaticWidgetType, bool initRenderer = true);
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /// @brief Creates a new progress bar widget
