@@ -874,6 +874,8 @@ public:
             RP1_3.triggerLevel = 760;
             RP2_4.triggerLevel = 760;
             RPL.triggerLevel = 1400;
+            VDOL.closeTime = 0;
+            VDOP.closeTime = 0;
         }
         void sim(double dt) {
             KSH1.sim(dt);
