@@ -251,6 +251,7 @@ void renderingThread(RenderWindow* window,
     simQualityCounter.setFillColor(sf::Color::White);
     simQualityCounter.setPosition(Vector2f(10.f, 40.f));
     window->setVerticalSyncEnabled(true);
+    SetThreadDescription(GetCurrentThread(), L"Renderer");
     try {
         window->clear({ 0,0,0 });
         window->display();
@@ -317,6 +318,8 @@ void simulator(
         inputEvents.reserve(64);
 
         auto lastTime = chrono::steady_clock::now();
+
+        SetThreadDescription(GetCurrentThread(), L"Simulator");
 
         while (running.load()) {
             auto currentTime = chrono::steady_clock::now();
